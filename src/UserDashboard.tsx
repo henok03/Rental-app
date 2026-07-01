@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import LanguageToggle from "./LanguageToggle";
+import { useTheme } from "./ThemeContext";
 
 
 // ─── Inline SVG Icon System ────────────────────────────────────────────────
@@ -124,7 +125,7 @@ const theme = {
 
 // ─── Component ─────────────────────────────────────────────────────────────
 export default function UserDashboard() {
-  const [dark, setDark] = useState(true);
+  const { dark, setDark } = useTheme();
  const { t } = useTranslation();
   const [country, setCountry] = useState("");
 const [rooms, setRooms] = useState("All");
@@ -225,14 +226,15 @@ async function toggleFavorite(propertyId: number) {
     <div style={{ minHeight: "100vh", background: th.bg, color: th.text, fontFamily: "'DM Sans', 'Segoe UI', sans-serif", transition: "background 0.3s, color 0.3s" }}>
 
       {/* ── NAVBAR ─────────────────────────────────────────────────── */}
-      <nav style={{
+      <nav className="cs-navbar" style={{
         position: "sticky", top: 0, zIndex: 100,
         background: th.navBg,
         backdropFilter: "blur(14px)",
         WebkitBackdropFilter: "blur(14px)",
         borderBottom: `1px solid ${th.border}`,
-        padding: "0 28px", height: "62px",
+        padding: "0 clamp(12px,4vw,28px)", height: "62px",
         display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px",
+        maxWidth: "1800px", margin: "0 auto", width: "100%", boxSizing: "border-box",
       }}>
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: "9px", flexShrink: 0 }}>
@@ -300,11 +302,14 @@ async function toggleFavorite(propertyId: number) {
 
         {/* Right controls */}
       <div
+  className="cs-right-controls"
   style={{
     display: "flex",
     alignItems: "center",
     gap: "14px",
     flexShrink: 0,
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
   }}
 >
   <div
@@ -350,6 +355,7 @@ async function toggleFavorite(propertyId: number) {
 <LanguageToggle dark={dark} t={th} />
   {/* Dark mode toggle */}
   <div
+    className="cs-theme-toggle"
     style={{
       display: "flex",
       alignItems: "center",
@@ -454,6 +460,7 @@ onClick={async () => {
     </span>
    {showProfile && (
   <div
+    className="cs-profile-menu"
     style={{
       position: "absolute",
       top: "54px",
@@ -623,10 +630,13 @@ onClick={async () => {
     zIndex: 99,
     background: dark ? "#15152a" : "#fff",
     borderBottom: `1px solid ${th.border}`,
-    padding: "20px 28px",
+    padding: "20px clamp(16px,5vw,28px)",
     display: "flex",
     flexDirection: "column",
     gap: "18px",
+    maxHeight: "calc(100vh - 62px)",
+    overflowY: "auto",
+    boxSizing: "border-box",
   }}
 >
   {/* Navigation */}
@@ -717,7 +727,58 @@ onClick={async () => {
       {t("favorites", "Favorites")} ({favorites.length})
     </button>
 
-   
+    {/* Dark mode toggle (mobile) */}
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "10px",
+      }}
+    >
+      <span style={{ color: th.subtext, display: "flex" }}>
+        <MoonIcon />
+      </span>
+
+      <button
+        onClick={() => setDark((d) => !d)}
+        aria-label="Toggle dark mode"
+        style={{
+          width: "42px",
+          height: "23px",
+          background: dark ? "#7c3aed" : "#cbd5e1",
+          border: "none",
+          borderRadius: "12px",
+          cursor: "pointer",
+          position: "relative",
+          transition: "background 0.3s",
+          flexShrink: 0,
+        }}
+      >
+        <span
+          style={{
+            display: "block",
+            width: "17px",
+            height: "17px",
+            background: "#fff",
+            borderRadius: "50%",
+            position: "absolute",
+            top: "3px",
+            left: dark ? "22px" : "3px",
+            transition: "left 0.25s",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.28)",
+          }}
+        />
+      </button>
+
+      <span style={{ color: th.subtext, display: "flex" }}>
+        <SunIcon />
+      </span>
+
+      <span style={{ fontSize: "15px", color: th.text }}>
+        {dark ? t("darkMode", "Dark Mode") : t("lightMode", "Light Mode")}
+      </span>
+    </div>
+
   </div>
 )}
         </div>
@@ -782,13 +843,13 @@ padding: "32px 16px 80px",
 </section>
 
       {/* ── FLOATING SEARCH BAR ────────────────────────────────────── */}
-      <div style={{ padding: "0 28px", marginTop: "-35px", position: "relative", zIndex: 10 }}>
+      <div style={{ padding: "0 clamp(12px,4vw,28px)", marginTop: "-35px", position: "relative", zIndex: 10 }}>
         <div className="cs-searchbar-in" style={{
           maxWidth: "940px", margin: "0 auto",
           background: dark ? "#15152a" : "#fff",
           borderRadius: "18px",
           boxShadow: dark ? "0 12px 48px rgba(0,0,0,0.5)" : "0 12px 48px rgba(0,0,0,0.12)",
-          padding: "24px 28px",
+          padding: "clamp(16px,3vw,24px) clamp(16px,3.5vw,28px)",
           display: "flex", flexWrap: "wrap", gap: "20px", alignItems: "flex-end",
           border: `1px solid ${th.border}`,
         }}>
@@ -904,7 +965,7 @@ padding: "32px 16px 80px",
       {/* ── SIMPLE TRUST BAR ───────────────────────────────────── */}
 <section
   style={{
-    padding: "18px 28px 40px",
+    padding: "18px clamp(12px,4vw,28px) 40px",
     borderTop: `1px solid ${th.border}`,
     marginTop: "20px",
   }}
@@ -950,12 +1011,34 @@ padding: "32px 16px 80px",
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { margin: 0; }
+
+        /* ── Tablet: tighten desktop nav spacing ───────────────────── */
+        @media (max-width: 1024px) {
+          .cs-desktop-nav { gap: 24px !important; }
+        }
+
+        /* ── Mobile: collapse nav into hamburger, keep theme/lang toggles visible ── */
         @media (max-width: 768px) {
           .cs-desktop-nav  { display: none !important; }
           .cs-desktop-icons { display: none !important; }
           .cs-desktop-me  { display: none !important; }
           .cs-mobile-btn  { display: flex !important; }
           .cs-divider     { display: none !important; }
+          .cs-right-controls { gap: 10px !important; }
+          .cs-theme-toggle { display: none !important; }
+        }
+
+        /* ── Small phones: extra breathing room so the toggle knob never gets clipped ── */
+        @media (max-width: 420px) {
+          .cs-right-controls { gap: 8px !important; }
+          .cs-theme-toggle { gap: 4px !important; }
+          .cs-profile-menu { min-width: 200px !important; right: -8px !important; }
+        }
+
+        /* ── Very large / TV screens: keep content comfortably centered ── */
+        @media (min-width: 1600px) {
+          .cs-hero-in { max-width: 640px !important; }
+          .cs-hero-in h1 { font-size: 58px !important; }
         }
       `}</style>
     </div>

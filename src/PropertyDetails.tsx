@@ -4,6 +4,7 @@ import { supabase } from "./supabaseClient";
 import "leaflet/dist/leaflet.css";
 import LanguageToggle from "./LanguageToggle";
 import { useTranslation } from "react-i18next";
+import { useTheme } from "./ThemeContext";
 
 import {
   MapContainer,
@@ -109,7 +110,7 @@ export default function PropertyDetails() {
 const [selectedImage, setSelectedImage] = useState("");
 
   const [loading, setLoading] = useState(true);
-  const [dark, setDark] = useState(true);
+  const { dark } = useTheme();
 const [saved, setSaved] = useState(false);
 const [showAgent, setShowAgent] = useState(false);
 useEffect(() => {
@@ -207,17 +208,19 @@ if (saved) {
 
 }
 async function handleShare() {
+  const propertyUrl = `${window.location.origin}/property/${property.id}`;
+
   const shareData = {
     title: property.name,
     text: `${t("shareText", "Check out this property")}: ${property.name}`,
-    url: window.location.href,
+    url: propertyUrl,
   };
 
   try {
     if (navigator.share) {
       await navigator.share(shareData);
     } else {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(propertyUrl);
       alert(t("linkCopied", "Property link copied to clipboard!"));
     }
   } catch (error) {
@@ -302,35 +305,6 @@ async function handleShare() {
   {/* Language Select Dropdown */}
  <LanguageToggle dark={dark} t={t_} />
 
-  {/* Dark Mode Toggle Switch */}
-  <button
-    onClick={() => setDark((d) => !d)}
-    style={{
-      width: "42px",
-      height: "23px",
-      background: dark ? "#7c3aed" : "#cbd5e1",
-      border: "none",
-      borderRadius: "12px",
-      cursor: "pointer",
-      position: "relative",
-      transition: "background 0.3s",
-    }}
-  >
-    <span
-      style={{
-        display: "block",
-        width: "17px",
-        height: "17px",
-        background: "#fff",
-        borderRadius: "50%",
-        position: "absolute",
-        top: "3px",
-        left: dark ? "22px" : "3px",
-        transition: "left 0.25s",
-        boxShadow: "0 1px 4px rgba(0,0,0,0.28)",
-      }}
-    />
-  </button>
       <button
   onClick={toggleSave}
   style={{
