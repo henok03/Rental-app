@@ -15,7 +15,7 @@ import AddProperty from "./AddProperty";
 import Login from "./login";
 import LanguageToggle from "./LanguageToggle";
 import "./i18n";
-import { ThemeProvider } from "./ThemeContext";
+
 ReactDOM.createRoot(
   document.getElementById("root")!
 ).render(
