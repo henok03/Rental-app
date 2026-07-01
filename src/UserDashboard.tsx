@@ -125,7 +125,7 @@ const theme = {
 // ─── Component ─────────────────────────────────────────────────────────────
 export default function UserDashboard() {
   const [dark, setDark] = useState(true);
-  const { t, i18n } = useTranslation();
+ const { t } = useTranslation();
   const [country, setCountry] = useState("");
 const [rooms, setRooms] = useState("All");
 const [price, setPrice] = useState("All");
