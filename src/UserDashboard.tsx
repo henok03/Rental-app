@@ -4,6 +4,9 @@ import { useEffect } from "react";
 import { supabase } from "./supabaseClient";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import LanguageToggle from "./LanguageToggle";
+
 
 // ─── Inline SVG Icon System ────────────────────────────────────────────────
 const HomeIcon = () => (
@@ -122,6 +125,7 @@ const theme = {
 // ─── Component ─────────────────────────────────────────────────────────────
 export default function UserDashboard() {
   const [dark, setDark] = useState(true);
+  const { t, i18n } = useTranslation();
   const [country, setCountry] = useState("");
 const [rooms, setRooms] = useState("All");
 const [price, setPrice] = useState("All");
@@ -132,7 +136,7 @@ const navigate = useNavigate();
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [showProfile, setShowProfile] = useState(false);
-  const t = dark ? theme.dark : theme.light;
+  const th = dark ? theme.dark : theme.light;
   const requireAuth = async () => {
   const {
     data: { user },
@@ -218,15 +222,15 @@ async function toggleFavorite(propertyId: number) {
 }
 
   return (
-    <div style={{ minHeight: "100vh", background: t.bg, color: t.text, fontFamily: "'DM Sans', 'Segoe UI', sans-serif", transition: "background 0.3s, color 0.3s" }}>
+    <div style={{ minHeight: "100vh", background: th.bg, color: th.text, fontFamily: "'DM Sans', 'Segoe UI', sans-serif", transition: "background 0.3s, color 0.3s" }}>
 
       {/* ── NAVBAR ─────────────────────────────────────────────────── */}
       <nav style={{
         position: "sticky", top: 0, zIndex: 100,
-        background: t.navBg,
+        background: th.navBg,
         backdropFilter: "blur(14px)",
         WebkitBackdropFilter: "blur(14px)",
-        borderBottom: `1px solid ${t.border}`,
+        borderBottom: `1px solid ${th.border}`,
         padding: "0 28px", height: "62px",
         display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px",
       }}>
@@ -234,8 +238,8 @@ async function toggleFavorite(propertyId: number) {
         <div style={{ display: "flex", alignItems: "center", gap: "9px", flexShrink: 0 }}>
           <span style={{ color: "#7c3aed" }}><HomeIcon /></span>
           <div>
-            <div style={{ fontWeight: 800, fontSize: "15px", letterSpacing: "-0.3px", color: "#7c3aed", lineHeight: 1.1 }}>CountryStay</div>
-            <div style={{ fontSize: "10px", color: t.subtext, lineHeight: 1.1 }}>Find your perfect home</div>
+            <div style={{ fontWeight: 800, fontSize: "15px", letterSpacing: "-0.3px", color: "#7c3aed", lineHeight: 1.1 }}>{t("logoName", "CountryStay")}</div>
+            <div style={{ fontSize: "10px", color: th.subtext, lineHeight: 1.1 }}>{t("logoSubtitle", "Find your perfect home")}</div>
           </div>
         </div>
 
@@ -256,17 +260,17 @@ async function toggleFavorite(propertyId: number) {
       fontWeight: 700,
     }}
   >
-    Home
+    {t("home", "Home")}
   </Link>
 
   <Link
     to="/how-it-works"
     style={{
-      color: t.text,
+      color: th.text,
       textDecoration: "none",
     }}
   >
-    How It Works
+    {t("howItWorks", "How It Works")}
   </Link>
 <button
   onClick={async () => {
@@ -276,21 +280,21 @@ async function toggleFavorite(propertyId: number) {
   style={{
     background: "none",
     border: "none",
-    color: t.text,
+    color: th.text,
     cursor: "pointer",
     fontSize: "inherit",
   }}
 >
-  Add Home
+  {t("addHome", "Add Home")}
 </button>
   <Link
     to="/contact"
     style={{
-      color: t.text,
+      color: th.text,
       textDecoration: "none",
     }}
   >
-    Contact
+    {t("contact", "Contact")}
   </Link>
 </div>
 
@@ -322,7 +326,7 @@ async function toggleFavorite(propertyId: number) {
         gap: "6px",
         color: showFavoritesOnly
           ? "#7c3aed"
-          : t.text,
+          : th.text,
         padding: 0,
       }}
     >
@@ -333,16 +337,17 @@ async function toggleFavorite(propertyId: number) {
           fontSize: "10px",
           color: showFavoritesOnly
             ? "#7c3aed"
-            : t.subtext,
+            : th.subtext,
         }}
       >
-        Favorites ({favorites.length})
+        {t("favorites", "Favorites")} ({favorites.length})
       </span>
     </button>
 
 
   </div>
 
+<LanguageToggle dark={dark} t={th} />
   {/* Dark mode toggle */}
   <div
     style={{
@@ -353,7 +358,7 @@ async function toggleFavorite(propertyId: number) {
   >
     <span
       style={{
-        color: t.subtext,
+        color: th.subtext,
         display: "flex",
       }}
     >
@@ -396,7 +401,7 @@ async function toggleFavorite(propertyId: number) {
 
     <span
       style={{
-        color: t.subtext,
+        color: th.subtext,
         display: "flex",
       }}
     >
@@ -432,7 +437,7 @@ onClick={async () => {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        color: t.text,
+        color: th.text,
       }}
     >
       <UserIcon />
@@ -445,7 +450,7 @@ onClick={async () => {
         fontWeight: 600,
       }}
     >
-      Me ▾
+      {t("me", "Me")} ▾
     </span>
    {showProfile && (
   <div
@@ -453,8 +458,8 @@ onClick={async () => {
       position: "absolute",
       top: "54px",
       right: 0,
-      background: t.cardBg,
-      border: `1px solid ${t.border || "rgba(255,255,255,0.08)"}`,
+      background: th.cardBg,
+      border: `1px solid ${th.border || "rgba(255,255,255,0.08)"}`,
       borderRadius: "12px",
       padding: "16px",
       minWidth: "240px",
@@ -465,12 +470,12 @@ onClick={async () => {
     }}
   >
     {/* User Information Header */}
-    <div style={{ padding: "0 8px 12px 8px", borderBottom: `1px solid ${t.border || "rgba(255,255,255,0.08)"}`, marginBottom: "8px" }}>
+    <div style={{ padding: "0 8px 12px 8px", borderBottom: `1px solid ${th.border || "rgba(255,255,255,0.08)"}`, marginBottom: "8px" }}>
       <div
         style={{
           fontWeight: 600,
           fontSize: "14px",
-          color: t.text || "#fff",
+          color: th.text || "#fff",
           textTransform: "capitalize"
         }}
       >
@@ -479,7 +484,7 @@ onClick={async () => {
       <div
         style={{
           fontSize: "12px",
-          color: t.subtext || "#94a3b8",
+          color: th.subtext || "#94a3b8",
           marginTop: "2px",
         }}
       >
@@ -499,7 +504,7 @@ onClick={async () => {
         border: "none",
         borderRadius: "8px",
         cursor: "pointer",
-        color: t.text || "#fff",
+        color: th.text || "#fff",
         fontSize: "14px",
         textAlign: "left",
         transition: "background 0.2s ease",
@@ -512,7 +517,7 @@ onClick={async () => {
         <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
         <polyline points="9 22 9 12 15 12 15 22"/>
       </svg>
-      My Homes
+      {t("myHomes", "My Homes")}
     </button>
 
     <button
@@ -526,7 +531,7 @@ onClick={async () => {
         border: "none",
         borderRadius: "8px",
         cursor: "pointer",
-        color: t.text || "#fff",
+        color: th.text || "#fff",
         fontSize: "14px",
         textAlign: "left",
         transition: "background 0.2s ease",
@@ -540,11 +545,11 @@ onClick={async () => {
         <path d="M5 12h14"/>
         <path d="M12 5v14"/>
       </svg>
-      Add Home
+      {t("addHome", "Add Home")}
     </button>
 
     {/* Divider */}
-    <div style={{ height: "1px", background: t.border || "rgba(255,255,255,0.08)", margin: "4px 0" }} />
+    <div style={{ height: "1px", background: th.border || "rgba(255,255,255,0.08)", margin: "4px 0" }} />
 
     {/* Logout Button */}
     <button
@@ -576,7 +581,7 @@ onClick={async () => {
         <polyline points="16 17 21 12 16 7"/>
         <line x1="21" x2="9" y1="12" y2="12"/>
       </svg>
-      Logout
+      {t("logout", "Logout")}
     </button>
   </div>
 )}
@@ -591,7 +596,7 @@ onClick={async () => {
       background: "none",
       border: "none",
       cursor: "pointer",
-      color: t.text,
+      color: th.text,
       padding: 0,
     }}
   >
@@ -604,7 +609,7 @@ onClick={async () => {
         <div style={{
           position: "fixed", top: "62px", left: 0, right: 0, zIndex: 99,
           background: dark ? "#15152a" : "#fff",
-          borderBottom: `1px solid ${t.border}`,
+          borderBottom: `1px solid ${th.border}`,
           padding: "20px 28px",
           display: "flex", flexDirection: "column", gap: "18px",
         }}>
@@ -617,7 +622,7 @@ onClick={async () => {
     right: 0,
     zIndex: 99,
     background: dark ? "#15152a" : "#fff",
-    borderBottom: `1px solid ${t.border}`,
+    borderBottom: `1px solid ${th.border}`,
     padding: "20px 28px",
     display: "flex",
     flexDirection: "column",
@@ -634,18 +639,18 @@ onClick={async () => {
       fontWeight: 700,
     }}
   >
-    Home
+    {t("home", "Home")}
   </Link>
   
   <Link
     to="/how-it-works"
     onClick={() => setMobileOpen(false)}
     style={{
-      color: t.text,
+      color: th.text,
       textDecoration: "none",
     }}
   >
-    How It Works
+    {t("howItWorks", "How It Works")}
   </Link>
 
   {/* Styled Button to look exactly like the Links */}
@@ -669,24 +674,24 @@ onClick={async () => {
       padding: 0,
       margin: 0,
       font: "inherit",
-      color: t.text,
+      color: th.text,
       textDecoration: "none",
       textAlign: "left",
       cursor: "pointer",
     }}
   >
-    Add Home
+    {t("addHome", "Add Home")}
   </button>
 
   <Link
     to="/contact"
     onClick={() => setMobileOpen(false)}
     style={{
-      color: t.text,
+      color: th.text,
       textDecoration: "none",
     }}
   >
-    Contact
+    {t("contact", "Contact")}
   </Link>
 
 
@@ -699,7 +704,7 @@ onClick={async () => {
       style={{
         background: "none",
         border: "none",
-        color: showFavoritesOnly ? "#7c3aed" : t.text,
+        color: showFavoritesOnly ? "#7c3aed" : th.text,
         display: "flex",
         alignItems: "center",
         gap: "10px",
@@ -709,7 +714,7 @@ onClick={async () => {
       }}
     >
       <HeartOutlineIcon />
-      Favorites ({favorites.length})
+      {t("favorites", "Favorites")} ({favorites.length})
     </button>
 
    
@@ -747,7 +752,7 @@ padding: "32px 16px 80px",
   <div style={{ position: "absolute", top: "20%", left: "20%", width: "200px", height: "200px", background: "radial-gradient(ellipse, rgba(124,58,237,0.07) 0%, transparent 75%)", pointerEvents: "none" }} />
 
   {/* CONTENT */}
-  <div style={{ maxWidth: "520px", zIndex: 2, position: "relative" }}>
+  <div className="cs-hero-in" style={{ maxWidth: "520px", zIndex: 2, position: "relative" }}>
     <h1
       style={{
         margin: 0,
@@ -758,9 +763,9 @@ padding: "32px 16px 80px",
         letterSpacing: "-0.5px",
       }}
     >
-      Find Your <br />
-      <span style={{ color: "#8b5cf6" }}>Perfect Home</span> <br />
-      Anywhere
+      {t("heroTitle1", "Find Your")} <br />
+      <span style={{ color: "#8b5cf6" }}>{t("heroTitleAccent", "Perfect Home")}</span> <br />
+      {t("heroTitle2", "Anywhere")}
     </h1>
 
     <p
@@ -771,91 +776,92 @@ padding: "32px 16px 80px",
         lineHeight: 1.65,
       }}
     >
-      Search by country and find homes <br />
-      that fit your lifestyle.
+      {t("heroSubtitle", "Search by country and find homes that fit your lifestyle.")}
     </p>
   </div>
 </section>
 
       {/* ── FLOATING SEARCH BAR ────────────────────────────────────── */}
       <div style={{ padding: "0 28px", marginTop: "-35px", position: "relative", zIndex: 10 }}>
-        <div style={{
+        <div className="cs-searchbar-in" style={{
           maxWidth: "940px", margin: "0 auto",
           background: dark ? "#15152a" : "#fff",
           borderRadius: "18px",
           boxShadow: dark ? "0 12px 48px rgba(0,0,0,0.5)" : "0 12px 48px rgba(0,0,0,0.12)",
           padding: "24px 28px",
           display: "flex", flexWrap: "wrap", gap: "20px", alignItems: "flex-end",
-          border: `1px solid ${t.border}`,
+          border: `1px solid ${th.border}`,
         }}>
           {/* Country input */}
           <div style={{ flex: "1 1 200px", minWidth: "160px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
               <GlobeIcon />
-              <span style={{ fontWeight: 700, fontSize: "13px", color: t.text }}>Find Country</span>
+              <span style={{ fontWeight: 700, fontSize: "13px", color: th.text }}>{t("findCountry", "Find Country")}</span>
             </div>
             <div style={{ position: "relative" }}>
-              <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: t.subtext, pointerEvents: "none" }}><SearchIcon /></span>
+              <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: th.subtext, pointerEvents: "none" }}><SearchIcon /></span>
               <input
                 value={country}
                 onChange={e => setCountry(e.target.value)}
-                placeholder="Search your country"
+                placeholder={t("searchPlaceholder", "Search your country")}
                 style={{
                   width: "100%", boxSizing: "border-box",
                   padding: "10px 38px 10px 38px",
-                  border: `1px solid ${t.border}`,
+                  border: `1px solid ${th.border}`,
                   borderRadius: "9px",
-                  background: t.inputBg,
-                  color: t.text,
+                  background: th.inputBg,
+                  color: th.text,
                   fontSize: "14px",
                   outline: "none",
                   transition: "border-color 0.2s",
                 }}
                 onFocus={e => (e.target.style.borderColor = "#7c3aed")}
-                onBlur={e => (e.target.style.borderColor = t.border)}
+                onBlur={e => (e.target.style.borderColor = th.border)}
               />
-              <span style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", color: t.subtext, cursor: "pointer" }}><FilterIcon /></span>
+              <span style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", color: th.subtext, cursor: "pointer" }}><FilterIcon /></span>
             </div>
           </div>
 
           {/* Vertical divider */}
-          <div className="cs-divider" style={{ width: "1px", background: t.border, alignSelf: "stretch" }} />
+          <div className="cs-divider" style={{ width: "1px", background: th.border, alignSelf: "stretch" }} />
 
           {/* Preferences */}
           <div style={{ flex: "2 1 340px", minWidth: "280px" }}>
-            <div style={{ fontWeight: 700, fontSize: "13px", marginBottom: "10px", color: t.text }}>Select Your Preferences</div>
+            <div style={{ fontWeight: 700, fontSize: "13px", marginBottom: "10px", color: th.text }}>{t("selectPreferences", "Select Your Preferences")}</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", alignItems: "flex-end" }}>
               {/* Room select */}
               <div style={{ flex: "1 1 120px", minWidth: "110px" }}>
-                <div style={{ fontSize: "10px", color: t.subtext, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "5px" }}>Room No</div>
+                <div style={{ fontSize: "10px", color: th.subtext, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "5px" }}>{t("roomNo", "Room No")}</div>
                 <div style={{ position: "relative" }}>
                   <select
                     value={rooms}
                     onChange={e => setRooms(e.target.value)}
-                    style={{ appearance: "none", width: "100%", padding: "9px 32px 9px 12px", border: `1px solid ${t.border}`, borderRadius: "9px", background: t.inputBg, color: t.text, fontSize: "14px", cursor: "pointer", outline: "none" }}
+                    style={{ appearance: "none", width: "100%", padding: "9px 32px 9px 12px", border: `1px solid ${th.border}`, borderRadius: "9px", background: th.inputBg, color: th.text, fontSize: "14px", cursor: "pointer", outline: "none" }}
                   >
-      {["All", "1 Room", "2 Rooms", "3 Rooms", "4+ Rooms"].map(r => (
-  <option key={r}>{r}</option>
-))}
+                    <option value="All">{t("all", "All")}</option>
+                    <option value="1 Room">{t("room1", "1 Room")}</option>
+                    <option value="2 Rooms">{t("rooms2", "2 Rooms")}</option>
+                    <option value="3 Rooms">{t("rooms3", "3 Rooms")}</option>
+                    <option value="4+ Rooms">{t("rooms4Plus", "4+ Rooms")}</option>
                   </select>
-                  <span style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: t.subtext }}><ChevronDownIcon /></span>
+                  <span style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: th.subtext }}><ChevronDownIcon /></span>
                 </div>
               </div>
 
               {/* Price select */}
               <div style={{ flex: "1 1 140px", minWidth: "120px" }}>
-                <div style={{ fontSize: "10px", color: t.subtext, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "5px" }}>Price Range</div>
+                <div style={{ fontSize: "10px", color: th.subtext, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "5px" }}>{t("priceRange", "Price Range")}</div>
                 <div style={{ position: "relative" }}>
                   <select
                     value={price}
                     onChange={e => setPrice(e.target.value)}
-                    style={{ appearance: "none", width: "100%", padding: "9px 32px 9px 12px", border: `1px solid ${t.border}`, borderRadius: "9px", background: t.inputBg, color: t.text, fontSize: "14px", cursor: "pointer", outline: "none" }}
+                    style={{ appearance: "none", width: "100%", padding: "9px 32px 9px 12px", border: `1px solid ${th.border}`, borderRadius: "9px", background: th.inputBg, color: th.text, fontSize: "14px", cursor: "pointer", outline: "none" }}
                   >
 {["All", "< $20k", "$20 – 30k", "$30 – 50k", "$50k+"].map((p) => (
   <option key={p}>{p}</option>
 ))}
                   </select>
-                  <span style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: t.subtext }}><ChevronDownIcon /></span>
+                  <span style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: th.subtext }}><ChevronDownIcon /></span>
                 </div>
               </div>
 
@@ -876,7 +882,7 @@ padding: "32px 16px 80px",
                 onMouseDown={e => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(0.97)"; }}
                 onMouseUp={e => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)"; }}
               >
-                <SearchIcon /> Search Homes
+                <SearchIcon /> {t("searchHomes", "Search Homes")}
               </button>
             </div>
           </div>
@@ -899,7 +905,7 @@ padding: "32px 16px 80px",
 <section
   style={{
     padding: "18px 28px 40px",
-    borderTop: `1px solid ${t.border}`,
+    borderTop: `1px solid ${th.border}`,
     marginTop: "20px",
   }}
 >
@@ -912,29 +918,29 @@ padding: "32px 16px 80px",
       justifyContent: "center",
       alignItems: "center",
       gap: "26px",
-      color: t.subtext,
+      color: th.subtext,
       fontSize: "13px",
       fontWeight: 500,
     }}
   >
     <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
       <ShieldIcon />
-      <span>Verified Homes</span>
+      <span>{t("verifiedHomes", "Verified Homes")}</span>
     </div>
 
     <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
       <LockIcon />
-      <span>Secure Payments</span>
+      <span>{t("securePayments", "Secure Payments")}</span>
     </div>
 
     <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
       <HeadphonesIcon />
-      <span>24/7 Support</span>
+      <span>{t("support", "24/7 Support")}</span>
     </div>
 
     <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
       <TagIcon />
-      <span>Best Prices</span>
+      <span>{t("bestPrices", "Best Prices")}</span>
     </div>
   </div>
 </section>

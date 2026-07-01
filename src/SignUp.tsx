@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { supabase } from "./supabaseClient";
 import { useNavigate, Link } from "react-router-dom";
-
+import LanguageToggle from "./LanguageToggle";
+import { useTranslation } from "react-i18next";
 // ─── Theme ────────────────────────────────────────────────────────────────
 const T = {
   bg: "#0d0d1a",
@@ -87,6 +88,7 @@ function InputField({
 
 // ─── Main Component ───────────────────────────────────────────────────────
 export default function SignUp() {
+  const { t } = useTranslation();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -100,9 +102,9 @@ export default function SignUp() {
     setErrorMsg("");
     setSuccessMsg("");
 
-    if (!fullName.trim()) { setErrorMsg("Full name is required."); return; }
-    if (!email.trim())    { setErrorMsg("Email is required."); return; }
-    if (password.length < 6) { setErrorMsg("Password must be at least 6 characters."); return; }
+    if (!fullName.trim()) { setErrorMsg(t("fullNameRequired", "Full name is required.")); return; }
+    if (!email.trim())    { setErrorMsg(t("emailRequired", "Email is required.")); return; }
+    if (password.length < 6) { setErrorMsg(t("passwordMinLength", "Password must be at least 6 characters.")); return; }
 
     setLoading(true);
     try {
@@ -121,10 +123,10 @@ export default function SignUp() {
         if (profileError) console.error(profileError);
       }
 
-      setSuccessMsg("Account created! Redirecting…");
+      setSuccessMsg(t("accountCreatedRedirecting", "Account created! Redirecting…"));
       setTimeout(() => navigate("/"), 2000);
     } catch (err: any) {
-      setErrorMsg(err.message || "Something went wrong.");
+      setErrorMsg(err.message || t("somethingWentWrong", "Something went wrong."));
     } finally {
       setLoading(false);
     }
@@ -151,10 +153,13 @@ export default function SignUp() {
         <Link to="/" style={{ display: "flex", alignItems: "center", gap: "8px", textDecoration: "none" }}>
           <span style={{ color: T.accent }}><HomeIcon /></span>
           <div>
-            <div style={{ fontWeight: 800, fontSize: "15px", color: T.accent, lineHeight: 1.1 }}>CountryStay</div>
-            <div style={{ fontSize: "10px", color: T.subtext, lineHeight: 1.1 }}>Find your perfect home</div>
+            <div style={{ fontWeight: 800, fontSize: "15px", color: T.accent, lineHeight: 1.1 }}>{t("logoName", "CountryStay")}</div>
+            <div style={{ fontSize: "10px", color: T.subtext, lineHeight: 1.1 }}>{t("logoSubtitle", "Find your perfect home")}</div>
           </div>
         </Link>
+    <div style={{ position: 'absolute', top: '16px', right: '120px', zIndex: 50 }}>
+  <LanguageToggle dark={true} t={T} />
+</div>
         <Link to="/login" style={{
           fontSize: "13px", fontWeight: 600, color: T.subtext,
           textDecoration: "none", padding: "7px 16px",
@@ -164,8 +169,9 @@ export default function SignUp() {
           onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = T.accent; (e.currentTarget as HTMLAnchorElement).style.color = T.accent; }}
           onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = T.border; (e.currentTarget as HTMLAnchorElement).style.color = T.subtext; }}
         >
-          Sign In
+          {t("signIn", "Sign In")}
         </Link>
+       
       </nav>
 
       {/* ── MAIN ── */}
@@ -196,9 +202,9 @@ export default function SignUp() {
               }}>
                 <HomeIcon />
               </div>
-              <h1 style={{ margin: 0, fontWeight: 800, fontSize: "22px", color: T.text }}>Create Account</h1>
+              <h1 style={{ margin: 0, fontWeight: 800, fontSize: "22px", color: T.text }}>{t("createAccount", "Create Account")}</h1>
               <p style={{ margin: "6px 0 0", fontSize: "14px", color: T.subtext }}>
-                Join CountryStay and find your perfect home
+                {t("joinCountryStay", "Join CountryStay and find your perfect home")}
               </p>
             </div>
 
@@ -207,7 +213,7 @@ export default function SignUp() {
 
               <InputField
                 icon={<UserIcon />}
-                placeholder="Full Name"
+                placeholder={t("fullNamePlaceholder", "Full Name")}
                 value={fullName}
                 onChange={setFullName}
               />
@@ -215,7 +221,7 @@ export default function SignUp() {
               <InputField
                 icon={<MailIcon />}
                 type="email"
-                placeholder="Email Address"
+                placeholder={t("emailAddressPlaceholder", "Email Address")}
                 value={email}
                 onChange={setEmail}
               />
@@ -223,7 +229,7 @@ export default function SignUp() {
               <InputField
                 icon={<LockIcon />}
                 type={showPassword ? "text" : "password"}
-                placeholder="Password (min. 6 characters)"
+                placeholder={t("passwordPlaceholder", "Password (min. 6 characters)")}
                 value={password}
                 onChange={setPassword}
                 rightSlot={
@@ -269,15 +275,15 @@ export default function SignUp() {
                 {loading ? (
                   <>
                     <span style={{ width: "16px", height: "16px", border: `2px solid ${T.subtext}`, borderTopColor: "transparent", borderRadius: "50%", animation: "su-spin 0.7s linear infinite", display: "inline-block" }} />
-                    Creating account…
+                    {t("creatingAccount", "Creating account…")}
                   </>
-                ) : "Create Account"}
+                ) : t("createAccountButton", "Create Account")}
               </button>
 
               {/* Divider */}
               <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "4px 0" }}>
                 <div style={{ flex: 1, height: "1px", background: T.border }} />
-                <span style={{ fontSize: "12px", color: T.subtext }}>already have an account?</span>
+                <span style={{ fontSize: "12px", color: T.subtext }}>{t("alreadyHaveAccount", "already have an account?")}</span>
                 <div style={{ flex: 1, height: "1px", background: T.border }} />
               </div>
 
@@ -297,17 +303,17 @@ export default function SignUp() {
                 onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = T.accent; (e.currentTarget as HTMLAnchorElement).style.color = T.accent; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = T.border; (e.currentTarget as HTMLAnchorElement).style.color = T.text; }}
               >
-                Sign In to Your Account
+                {t("signInToAccount", "Sign In to Your Account")}
               </Link>
             </div>
           </div>
 
           {/* Footer note */}
           <p style={{ textAlign: "center", fontSize: "12px", color: T.subtext, marginTop: "20px" }}>
-            By signing up, you agree to our{" "}
-            <span style={{ color: T.accent, cursor: "pointer" }}>Terms of Service</span>
-            {" & "}
-            <span style={{ color: T.accent, cursor: "pointer" }}>Privacy Policy</span>
+            {t("agreeToTermsPrefix", "By signing up, you agree to our")}{" "}
+            <span style={{ color: T.accent, cursor: "pointer" }}>{t("termsOfService", "Terms of Service")}</span>
+            {" "}{t("and", "&")}{" "}
+            <span style={{ color: T.accent, cursor: "pointer" }}>{t("privacyPolicy", "Privacy Policy")}</span>
           </p>
         </div>
       </div>

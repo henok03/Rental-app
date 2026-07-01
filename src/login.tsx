@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { supabase } from "./supabaseClient";
 import { useNavigate, Link } from "react-router-dom";
-
+import { useTranslation } from "react-i18next";
+import LanguageToggle from "./LanguageToggle";
 // ─── Theme ────────────────────────────────────────────────────────────────
 const T = {
   bg: "#0d0d1a",
@@ -83,6 +84,7 @@ function InputField({
 
 // ─── Main Component ───────────────────────────────────────────────────────
 export default function Login() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -92,8 +94,8 @@ export default function Login() {
 
   async function handleLogin() {
     setErrorMsg("");
-    if (!email.trim())    { setErrorMsg("Email is required."); return; }
-    if (!password.trim()) { setErrorMsg("Password is required."); return; }
+    if (!email.trim())    { setErrorMsg(t("emailRequired", "Email is required.")); return; }
+    if (!password.trim()) { setErrorMsg(t("passwordRequired", "Password is required.")); return; }
 
     setLoading(true);
     try {
@@ -101,7 +103,7 @@ export default function Login() {
       if (error) throw new Error(error.message);
       navigate("/");
     } catch (err: any) {
-      setErrorMsg(err.message || "Login failed. Please try again.");
+      setErrorMsg(err.message || t("loginFailed", "Login failed. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -128,10 +130,13 @@ export default function Login() {
         <Link to="/" style={{ display: "flex", alignItems: "center", gap: "8px", textDecoration: "none" }}>
           <span style={{ color: T.accent }}><HomeIcon /></span>
           <div>
-            <div style={{ fontWeight: 800, fontSize: "15px", color: T.accent, lineHeight: 1.1 }}>CountryStay</div>
-            <div style={{ fontSize: "10px", color: T.subtext, lineHeight: 1.1 }}>Find your perfect home</div>
+            <div style={{ fontWeight: 800, fontSize: "15px", color: T.accent, lineHeight: 1.1 }}>{t("logoName", "CountryStay")}</div>
+            <div style={{ fontSize: "10px", color: T.subtext, lineHeight: 1.1 }}>{t("logoSubtitle", "Find your perfect home")}</div>
           </div>
         </Link>
+  <div style={{ position: 'absolute', top: '16px', right: '120px', zIndex: 50 }}>
+  <LanguageToggle dark={true} t={T} />
+</div>
         <Link to="/signup" style={{
           fontSize: "13px", fontWeight: 600, color: T.subtext,
           textDecoration: "none", padding: "7px 16px",
@@ -141,7 +146,7 @@ export default function Login() {
           onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = T.accent; (e.currentTarget as HTMLAnchorElement).style.color = T.accent; }}
           onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = T.border; (e.currentTarget as HTMLAnchorElement).style.color = T.subtext; }}
         >
-          Sign Up
+          {t("signUp", "Sign Up")}
         </Link>
       </nav>
 
@@ -173,9 +178,9 @@ export default function Login() {
               }}>
                 <HomeIcon />
               </div>
-              <h1 style={{ margin: 0, fontWeight: 800, fontSize: "22px", color: T.text }}>Welcome Back</h1>
+              <h1 style={{ margin: 0, fontWeight: 800, fontSize: "22px", color: T.text }}>{t("welcomeBack", "Welcome Back")}</h1>
               <p style={{ margin: "6px 0 0", fontSize: "14px", color: T.subtext }}>
-                Sign in to continue to CountryStay
+                {t("signInToContinue", "Sign in to continue to CountryStay")}
               </p>
             </div>
 
@@ -185,7 +190,7 @@ export default function Login() {
               <InputField
                 icon={<MailIcon />}
                 type="email"
-                placeholder="Email Address"
+                placeholder={t("emailAddressPlaceholder", "Email Address")}
                 value={email}
                 onChange={setEmail}
               />
@@ -193,7 +198,7 @@ export default function Login() {
               <InputField
                 icon={<LockIcon />}
                 type={showPassword ? "text" : "password"}
-                placeholder="Password"
+                placeholder={t("passwordOnlyPlaceholder", "Password")}
                 value={password}
                 onChange={setPassword}
                 rightSlot={
@@ -234,15 +239,15 @@ export default function Login() {
                 {loading ? (
                   <>
                     <span style={{ width: "16px", height: "16px", border: `2px solid ${T.subtext}`, borderTopColor: "transparent", borderRadius: "50%", animation: "lg-spin 0.7s linear infinite", display: "inline-block" }} />
-                    Signing in…
+                    {t("signingIn", "Signing in…")}
                   </>
-                ) : "Sign In"}
+                ) : t("signInButton", "Sign In")}
               </button>
 
               {/* Divider */}
               <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "4px 0" }}>
                 <div style={{ flex: 1, height: "1px", background: T.border }} />
-                <span style={{ fontSize: "12px", color: T.subtext }}>don't have an account?</span>
+                <span style={{ fontSize: "12px", color: T.subtext }}>{t("noAccountYet", "don't have an account?")}</span>
                 <div style={{ flex: 1, height: "1px", background: T.border }} />
               </div>
 
@@ -262,15 +267,15 @@ export default function Login() {
                 onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = T.accent; (e.currentTarget as HTMLAnchorElement).style.color = T.accent; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = T.border; (e.currentTarget as HTMLAnchorElement).style.color = T.text; }}
               >
-                Create a New Account
+                {t("createNewAccount", "Create a New Account")}
               </Link>
             </div>
           </div>
 
           {/* Footer note */}
           <p style={{ textAlign: "center", fontSize: "12px", color: T.subtext, marginTop: "20px" }}>
-            Protected by Supabase Auth ·{" "}
-            <span style={{ color: T.accent, cursor: "pointer" }}>Privacy Policy</span>
+            {t("protectedBySupabase", "Protected by Supabase Auth")} ·{" "}
+            <span style={{ color: T.accent, cursor: "pointer" }}>{t("privacyPolicy", "Privacy Policy")}</span>
           </p>
         </div>
       </div>

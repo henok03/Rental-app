@@ -13,6 +13,8 @@ import AddProperty from "./AddProperty";
 import SignUp from "./SignUp";
 import EditProperty from "./EditProperty";
 import Login from "./login";
+import "./i18n";
+
 ReactDOM.createRoot(
   document.getElementById("root")!
 ).render(

@@ -2,6 +2,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 import "leaflet/dist/leaflet.css";
+import LanguageToggle from "./LanguageToggle";
+import { useTranslation } from "react-i18next";
+
 import {
   MapContainer,
   TileLayer,
@@ -99,6 +102,7 @@ function Skeleton({ w = "100%", h = "20px", radius = "8px", dark = true }) {
 export default function PropertyDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [property, setProperty] = useState<any>(null);
   const [images, setImages] = useState<any[]>([]);
@@ -129,7 +133,7 @@ async function checkSaved() {
   setSaved(!!data);
 }
 
-  const t = dark ? theme.dark : theme.light;
+  const t_ = dark ? theme.dark : theme.light;
 
   useEffect(() => { fetchProperty(); }, []);
 
@@ -205,7 +209,7 @@ if (saved) {
 async function handleShare() {
   const shareData = {
     title: property.name,
-    text: `Check out this property: ${property.name}`,
+    text: `${t("shareText", "Check out this property")}: ${property.name}`,
     url: window.location.href,
   };
 
@@ -214,7 +218,7 @@ async function handleShare() {
       await navigator.share(shareData);
     } else {
       await navigator.clipboard.writeText(window.location.href);
-      alert("Property link copied to clipboard!");
+      alert(t("linkCopied", "Property link copied to clipboard!"));
     }
   } catch (error) {
     console.log("Share cancelled", error);
@@ -223,7 +227,7 @@ async function handleShare() {
   // ── Loading ──────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div style={{ minHeight: "100vh", background: t.bg, padding: "clamp(16px,4vw,32px)", fontFamily: "'DM Sans', sans-serif" }}>
+      <div style={{ minHeight: "100vh", background: t_.bg, padding: "clamp(16px,4vw,32px)", fontFamily: "'DM Sans', sans-serif" }}>
         <div style={{ maxWidth: "1200px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "16px" }}>
           <Skeleton w="120px" h="36px" radius="10px" dark={dark} />
           <Skeleton w="100%" h="clamp(240px,45vw,480px)" radius="20px" dark={dark} />
@@ -239,13 +243,13 @@ async function handleShare() {
   // ── Not found ────────────────────────────────────────────────────────
   if (!property) {
     return (
-      <div style={{ minHeight: "100vh", background: t.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", color: t.text }}>
+      <div style={{ minHeight: "100vh", background: t_.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", color: t_.text }}>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: "64px", marginBottom: "16px" }}>🏚</div>
-          <h2 style={{ fontWeight: 800, marginBottom: "8px" }}>Property not found</h2>
-          <p style={{ color: t.subtext, marginBottom: "24px" }}>This listing may have been removed.</p>
+          <h2 style={{ fontWeight: 800, marginBottom: "8px" }}>{t("propertyNotFound", "Property not found")}</h2>
+          <p style={{ color: t_.subtext, marginBottom: "24px" }}>{t("listingRemoved", "This listing may have been removed.")}</p>
           <button onClick={() => navigate(-1)} style={{ padding: "10px 24px", background: "#7c3aed", color: "#fff", border: "none", borderRadius: "10px", cursor: "pointer", fontWeight: 700 }}>
-            Go Back
+            {t("goBack", "Go Back")}
           </button>
         </div>
       </div>
@@ -254,7 +258,7 @@ async function handleShare() {
 
   // ── Main render ──────────────────────────────────────────────────────
   return (
-    <div style={{ minHeight: "100vh", background: t.bg, color: t.text, fontFamily: "'DM Sans', 'Segoe UI', sans-serif", transition: "background 0.3s, color 0.3s" }}>
+    <div style={{ minHeight: "100vh", background: t_.bg, color: t_.text, fontFamily: "'DM Sans', 'Segoe UI', sans-serif", transition: "background 0.3s, color 0.3s" }}>
 
       {/* ── TOP BAR ── */}
       <div style={{
@@ -262,7 +266,7 @@ async function handleShare() {
         background: dark ? "rgba(13,13,26,0.96)" : "rgba(255,255,255,0.96)",
         backdropFilter: "blur(14px)",
         WebkitBackdropFilter: "blur(14px)",
-        borderBottom: `1px solid ${t.border}`,
+        borderBottom: `1px solid ${t_.border}`,
         padding: "0 clamp(14px,4vw,32px)",
         height: "62px",
         display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -282,27 +286,51 @@ async function handleShare() {
               display: "flex", alignItems: "center", gap: "7px",
               background: dark ? "#1e1e38" : "#f0f0fa",
               border: "none", borderRadius: "9px",
-              padding: "7px 14px", color: t.text,
+              padding: "7px 14px", color: t_.text,
               fontSize: "13px", fontWeight: 600, cursor: "pointer",
               transition: "background 0.2s",
             }}
             onMouseEnter={e => (e.currentTarget.style.background = "#7c3aed20")}
             onMouseLeave={e => (e.currentTarget.style.background = dark ? "#1e1e38" : "#f0f0fa")}
           >
-            <BackIcon /> Back
+            <BackIcon /> {t("back", "Back")}
           </button>
           
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          {/* Dark toggle */}
-          <button
-            onClick={() => setDark(d => !d)}
-            style={{ width: "42px", height: "23px", background: dark ? "#7c3aed" : "#cbd5e1", border: "none", borderRadius: "12px", cursor: "pointer", position: "relative", transition: "background 0.3s" }}
-          >
-            <span style={{ display: "block", width: "17px", height: "17px", background: "#fff", borderRadius: "50%", position: "absolute", top: "3px", left: dark ? "22px" : "3px", transition: "left 0.25s", boxShadow: "0 1px 4px rgba(0,0,0,0.28)" }} />
-          </button>
+       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+  {/* Language Select Dropdown */}
+ <LanguageToggle dark={dark} t={t_} />
 
+  {/* Dark Mode Toggle Switch */}
+  <button
+    onClick={() => setDark((d) => !d)}
+    style={{
+      width: "42px",
+      height: "23px",
+      background: dark ? "#7c3aed" : "#cbd5e1",
+      border: "none",
+      borderRadius: "12px",
+      cursor: "pointer",
+      position: "relative",
+      transition: "background 0.3s",
+    }}
+  >
+    <span
+      style={{
+        display: "block",
+        width: "17px",
+        height: "17px",
+        background: "#fff",
+        borderRadius: "50%",
+        position: "absolute",
+        top: "3px",
+        left: dark ? "22px" : "3px",
+        transition: "left 0.25s",
+        boxShadow: "0 1px 4px rgba(0,0,0,0.28)",
+      }}
+    />
+  </button>
       <button
   onClick={toggleSave}
   style={{
@@ -312,10 +340,10 @@ async function handleShare() {
     background: saved
       ? "rgba(124,58,237,0.15)"
       : (dark ? "#1e1e38" : "#f0f0fa"),
-    border: `1px solid ${saved ? "#7c3aed" : t.border}`,
+    border: `1px solid ${saved ? "#7c3aed" : t_.border}`,
     borderRadius: "9px",
     padding: "7px 14px",
-    color: saved ? "#7c3aed" : t.text,
+    color: saved ? "#7c3aed" : t_.text,
     fontSize: "13px",
     fontWeight: 600,
     cursor: "pointer",
@@ -323,7 +351,7 @@ async function handleShare() {
   }}
 >
   <HeartIcon />
-  {saved ? "Saved" : "Save"}
+  {saved ? t("saved", "Saved") : t("save", "Save")}
 </button>
 
           <button
@@ -333,17 +361,17 @@ async function handleShare() {
     alignItems: "center",
     gap: "6px",
     background: dark ? "#1e1e38" : "#f0f0fa",
-    border: `1px solid ${t.border}`,
+    border: `1px solid ${t_.border}`,
     borderRadius: "9px",
     padding: "7px 14px",
-    color: t.text,
+    color: t_.text,
     fontSize: "13px",
     fontWeight: 600,
     cursor: "pointer",
   }}
 >
   <ShareIcon />
-  Share
+  {t("share", "Share")}
 </button>
         </div>
       </div>
@@ -421,13 +449,13 @@ async function handleShare() {
           <div style={{ display: "flex", flexDirection: "column", gap: "clamp(16px,2.5vw,24px)" }}>
 
             {/* Title + price */}
-            <div style={{ background: t.cardBg, borderRadius: "16px", padding: "clamp(16px,3vw,26px)", border: `1px solid ${t.border}` }}>
+            <div style={{ background: t_.cardBg, borderRadius: "16px", padding: "clamp(16px,3vw,26px)", border: `1px solid ${t_.border}` }}>
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
                 <div>
                   <h1 style={{ margin: 0, fontSize: "clamp(20px,3.5vw,28px)", fontWeight: 800, lineHeight: 1.2 }}>
                     {property.name}
                   </h1>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "10px", color: t.subtext, fontSize: "14px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "10px", color: t_.subtext, fontSize: "14px" }}>
                     <PinIcon /> {property.location}
                   </div>
                 </div>
@@ -439,51 +467,51 @@ async function handleShare() {
                   <div style={{ color: "#7c3aed", fontWeight: 800, fontSize: "clamp(20px,3vw,26px)", lineHeight: 1 }}>
                     ${property.price.toLocaleString()}
                   </div>
-                  <div style={{ color: t.subtext, fontSize: "12px", marginTop: "3px" }}>per month</div>
+                  <div style={{ color: t_.subtext, fontSize: "12px", marginTop: "3px" }}>{t("perMonth", "per month")}</div>
                 </div>
               </div>
 
               {/* Stat tiles */}
               <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", marginTop: "20px" }}>
                 {[
-                     { icon: <BathIcon />, value: property.rooms, label: "Rooms" },
-                  { icon: <BedIcon />, value: property.bedrooms, label: "Bedrooms" },
+                     { icon: <BathIcon />, value: property.rooms, label: t("rooms", "Rooms") },
+                  { icon: <BedIcon />, value: property.bedrooms, label: t("bedrooms", "Bedrooms") },
                
-                  { icon: <AreaIcon />, value: `${property.sqft}`, label: "sqft" },
+                  { icon: <AreaIcon />, value: `${property.sqft}`, label: t("sqft", "sqft") },
                 ].map(({ icon, value, label }) => (
                   <div key={label} style={{
                     flex: "1 1 90px",
                     background: dark ? "#1e1e38" : "#f4f4f9",
                     borderRadius: "12px", padding: "14px 16px",
                     display: "flex", flexDirection: "column", gap: "8px",
-                    border: `1px solid ${t.border}`,
+                    border: `1px solid ${t_.border}`,
                   }}>
                     {icon}
-                    <div style={{ fontWeight: 800, fontSize: "18px", color: t.text }}>{value}</div>
-                    <div style={{ fontSize: "12px", color: t.subtext }}>{label}</div>
+                    <div style={{ fontWeight: 800, fontSize: "18px", color: t_.text }}>{value}</div>
+                    <div style={{ fontSize: "12px", color: t_.subtext }}>{label}</div>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Property info — only real DB fields */}
-            <div style={{ background: t.cardBg, borderRadius: "16px", padding: "clamp(16px,3vw,26px)", border: `1px solid ${t.border}` }}>
-              <h3 style={{ margin: "0 0 16px", fontWeight: 700, fontSize: "16px" }}>Property Information</h3>
+            <div style={{ background: t_.cardBg, borderRadius: "16px", padding: "clamp(16px,3vw,26px)", border: `1px solid ${t_.border}` }}>
+              <h3 style={{ margin: "0 0 16px", fontWeight: 700, fontSize: "16px" }}>{t("propertyInformation", "Property Information")}</h3>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px,1fr))", gap: "12px" }}>
                 {[
-                  ["Address",   property.address],
-                  ["Bedrooms",  property.bedrooms],
-                  ["Rooms", property.rooms],
-                  ["Area",      `${property.sqft} sqft`],
+                  [t("address", "Address"),   property.address],
+                  [t("bedrooms", "Bedrooms"),  property.bedrooms],
+                  [t("rooms", "Rooms"), property.rooms],
+                  [t("area", "Area"),      `${property.sqft} ${t("sqft", "sqft")}`],
                 ].map(([label, value]) => (
                   value != null && value !== "" ? (
                     <div key={label as string} style={{
                       background: dark ? "#1a1a30" : "#f8f8fc",
                       borderRadius: "10px", padding: "12px 16px",
-                      border: `1px solid ${t.border}`,
+                      border: `1px solid ${t_.border}`,
                     }}>
-                      <div style={{ fontSize: "11px", color: t.subtext, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "5px" }}>{label}</div>
-                      <div style={{ fontWeight: 600, fontSize: "14px", color: t.text }}>{value}</div>
+                      <div style={{ fontSize: "11px", color: t_.subtext, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "5px" }}>{label}</div>
+                      <div style={{ fontWeight: 600, fontSize: "14px", color: t_.text }}>{value}</div>
                     </div>
                   ) : null
                 ))}
@@ -491,10 +519,10 @@ async function handleShare() {
             </div>
             <div
   style={{
-    background: t.cardBg,
+    background: t_.cardBg,
     borderRadius: "16px",
     padding: "24px",
-    border: `1px solid ${t.border}`,
+    border: `1px solid ${t_.border}`,
   }}
 >
   <h3
@@ -503,7 +531,7 @@ async function handleShare() {
       fontWeight: 700,
     }}
   >
-    Amenities
+    {t("amenities", "Amenities")}
   </h3>
 
   <div
@@ -537,10 +565,10 @@ async function handleShare() {
 </div>
 <div
   style={{
-    background: t.cardBg,
+    background: t_.cardBg,
     borderRadius: "16px",
     padding: "24px",
-    border: `1px solid ${t.border}`,
+    border: `1px solid ${t_.border}`,
   }}
 >
   <h3
@@ -549,7 +577,7 @@ async function handleShare() {
       fontWeight: 700,
     }}
   >
-    Location Map
+    {t("locationMap", "Location Map")}
   </h3>
 {property?.lat && property?.lng ? (
   <MapContainer
@@ -578,7 +606,7 @@ async function handleShare() {
     />
   </MapContainer>
   ) : (
-  <p>Location not available</p>
+  <p>{t("locationNotAvailable", "Location not available")}</p>
 )}
           </div>
 
@@ -588,13 +616,13 @@ async function handleShare() {
 
             {/* Contact card */}
             <div style={{
-              background: t.cardBg, border: `1px solid ${t.border}`,
+              background: t_.cardBg, border: `1px solid ${t_.border}`,
               borderRadius: "18px", padding: "clamp(16px,3vw,24px)",
               boxShadow: dark ? "0 8px 32px rgba(0,0,0,0.4)" : "0 8px 32px rgba(0,0,0,0.08)",
             }}>
-              <div style={{ fontWeight: 800, fontSize: "18px", marginBottom: "6px" }}>Interested?</div>
-              <div style={{ color: t.subtext, fontSize: "13px", marginBottom: "20px" }}>
-                Contact our agent to schedule a viewing.
+              <div style={{ fontWeight: 800, fontSize: "18px", marginBottom: "6px" }}>{t("interested", "Interested?")}</div>
+              <div style={{ color: t_.subtext, fontSize: "13px", marginBottom: "20px" }}>
+                {t("contactAgentSubtitle", "Contact our agent to schedule a viewing.")}
               </div>
 
               <button
@@ -617,7 +645,7 @@ async function handleShare() {
   }}
 >
   <PhoneIcon />
-  Contact Agent
+  {t("contactAgent", "Contact Agent")}
 </button>
 {showAgent && (
   <div
@@ -641,18 +669,18 @@ async function handleShare() {
         color: "#fff",
       }}
     >
-      <h2>Landlord Information</h2>
+      <h2>{t("landlordInformation", "Landlord Information")}</h2>
 
       <p>
-        <strong>Name:</strong> {property.landlord_name}
+        <strong>{t("nameLabel", "Name")}:</strong> {property.landlord_name}
       </p>
 
       <p>
-        <strong>Phone:</strong> {property.landlord_phone}
+        <strong>{t("phoneLabel", "Phone")}:</strong> {property.landlord_phone}
       </p>
 
       <p>
-        <strong>Email:</strong> {property.landlord_email}
+        <strong>{t("emailLabel", "Email")}:</strong> {property.landlord_email}
       </p>
 
    <div
@@ -681,7 +709,7 @@ async function handleShare() {
       boxShadow: "0 4px 12px rgba(37,211,102,0.3)",
     }}
   >
-    📱 WhatsApp Chat
+    📱 {t("whatsappChat", "WhatsApp Chat")}
   </a>
 
   <a
@@ -702,7 +730,7 @@ async function handleShare() {
       boxShadow: "0 4px 12px rgba(34,158,217,0.3)",
     }}
   >
-    ✈️ Telegram Message
+    ✈️ {t("telegramMessage", "Telegram Message")}
   </a>
 </div>
       <button
@@ -718,7 +746,7 @@ async function handleShare() {
           cursor: "pointer",
         }}
       >
-        Close
+        {t("close", "Close")}
       </button>
     </div>
   </div>
