@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 import "leaflet/dist/leaflet.css";
-import LanguageToggle from "./LanguageToggle";
+
 import { useTranslation } from "react-i18next";
 import { useTheme } from "./ThemeContext";
 
@@ -302,8 +302,7 @@ async function handleShare() {
         </div>
 
        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-  {/* Language Select Dropdown */}
- <LanguageToggle dark={dark} t={t_} />
+
 
       <button
   onClick={toggleSave}
