@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { supabase } from "./supabaseClient";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import LanguageToggle from "./LanguageToggle";
 // ─── Theme ────────────────────────────────────────────────────────────────
@@ -21,28 +21,28 @@ const T = {
 // ─── Icons ────────────────────────────────────────────────────────────────
 const HomeIcon = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-    <polyline points="9 22 9 12 15 12 15 22"/>
+    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+    <polyline points="9 22 9 12 15 12 15 22" />
   </svg>
 );
 const MailIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.subtext} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" />
   </svg>
 );
 const LockIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.subtext} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0110 0v4" />
   </svg>
 );
 const EyeIcon = ({ open }: { open: boolean }) => open ? (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.subtext} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
   </svg>
 ) : (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.subtext} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
-    <line x1="1" y1="1" x2="23" y2="23"/>
+    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
+    <line x1="1" y1="1" x2="23" y2="23" />
   </svg>
 );
 
@@ -85,6 +85,11 @@ function InputField({
 // ─── Main Component ───────────────────────────────────────────────────────
 export default function Login() {
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
+  // Where to send the user after login succeeds. Defaults to homepage
+  // if nobody sent them here with a ?redirect= link.
+  const redirectTo = searchParams.get("redirect") || "/";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -94,14 +99,16 @@ export default function Login() {
 
   async function handleLogin() {
     setErrorMsg("");
-    if (!email.trim())    { setErrorMsg(t("emailRequired", "Email is required.")); return; }
+    if (!email.trim()) { setErrorMsg(t("emailRequired", "Email is required.")); return; }
     if (!password.trim()) { setErrorMsg(t("passwordRequired", "Password is required.")); return; }
 
     setLoading(true);
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw new Error(error.message);
-      navigate("/");
+      // Send them back to wherever they came from (e.g. a property page),
+      // instead of always going to the homepage.
+      navigate(redirectTo);
     } catch (err: any) {
       setErrorMsg(err.message || t("loginFailed", "Login failed. Please try again."));
     } finally {
@@ -134,15 +141,17 @@ export default function Login() {
             <div style={{ fontSize: "10px", color: T.subtext, lineHeight: 1.1 }}>{t("logoSubtitle", "Find your perfect home")}</div>
           </div>
         </Link>
-  <div style={{ position: 'absolute', top: '16px', right: '120px', zIndex: 50 }}>
-  <LanguageToggle dark={true} t={T} />
-</div>
-        <Link to="/signup" style={{
-          fontSize: "13px", fontWeight: 600, color: T.subtext,
-          textDecoration: "none", padding: "7px 16px",
-          border: `1px solid ${T.border}`, borderRadius: "9px",
-          transition: "border-color 0.2s, color 0.2s",
-        }}
+        <div style={{ position: 'absolute', top: '16px', right: '120px', zIndex: 50 }}>
+          <LanguageToggle dark={true} t={T} />
+        </div>
+        <Link
+          to={`/signup${redirectTo !== "/" ? `?redirect=${encodeURIComponent(redirectTo)}` : ""}`}
+          style={{
+            fontSize: "13px", fontWeight: 600, color: T.subtext,
+            textDecoration: "none", padding: "7px 16px",
+            border: `1px solid ${T.border}`, borderRadius: "9px",
+            transition: "border-color 0.2s, color 0.2s",
+          }}
           onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = T.accent; (e.currentTarget as HTMLAnchorElement).style.color = T.accent; }}
           onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = T.border; (e.currentTarget as HTMLAnchorElement).style.color = T.subtext; }}
         >
@@ -211,7 +220,7 @@ export default function Login() {
               {/* Error */}
               {errorMsg && (
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: "10px", padding: "11px 14px", fontSize: "13px", color: T.error }}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={T.error} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={T.error} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
                   {errorMsg}
                 </div>
               )}
@@ -253,7 +262,7 @@ export default function Login() {
 
               {/* Sign up link */}
               <Link
-                to="/signup"
+                to={`/signup${redirectTo !== "/" ? `?redirect=${encodeURIComponent(redirectTo)}` : ""}`}
                 style={{
                   display: "block", textAlign: "center",
                   padding: "12px",

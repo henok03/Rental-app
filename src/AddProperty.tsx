@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import type { DragEvent, ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { supabase } from "./supabaseClient";
 import "leaflet/dist/leaflet.css";
 import {
@@ -175,6 +176,7 @@ function ImageDropZone({
 }: {
   label: string; onFiles: (files: File[]) => void; multiple?: boolean;
 }) {
+  const { t } = useTranslation();
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -209,7 +211,7 @@ function ImageDropZone({
     >
       <UploadIcon />
       <p style={{ margin: "10px 0 4px", fontSize: "14px", fontWeight: 600, color: T.text }}>{label}</p>
-      <p style={{ margin: 0, fontSize: "12px", color: T.subtext }}>Drag & drop or click to browse · JPG, PNG, WEBP</p>
+      <p style={{ margin: 0, fontSize: "12px", color: T.subtext }}>{t("dragDropHint")}</p>
       <input ref={inputRef} type="file" accept="image/*" multiple={multiple} style={{ display: "none" }} onChange={handleChange} />
     </div>
   );
@@ -250,6 +252,7 @@ function ImagePreviewGrid({
 
 // ─── Main Component ───────────────────────────────────────────────────────
 export default function AddProperty() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   // Text fields
@@ -311,16 +314,16 @@ function LocationPicker() {
   // ── Validation ──────────────────────────────────────────────────────
   function validate(): boolean {
     const e: FormErrors = {};
-    if (!name.trim())       e.name = "Property name is required";
-    if (!location.trim())   e.location = "Location is required";
-    if (!price.trim())      e.price = "Price is required";
-    else if (isNaN(Number(price)) || Number(price) <= 0) e.price = "Enter a valid price";
-    if (bedrooms && isNaN(Number(bedrooms))) e.bedrooms = "Must be a number";
-    if (rooms && isNaN(Number(rooms))) e.rooms = "Must be a number";
-    if (sqft && isNaN(Number(sqft))) e.sqft = "Must be a number";
+    if (!name.trim())       e.name = t("errorNameRequired");
+    if (!location.trim())   e.location = t("errorLocationRequired");
+    if (!price.trim())      e.price = t("errorPriceRequired");
+    else if (isNaN(Number(price)) || Number(price) <= 0) e.price = t("errorPriceInvalid");
+    if (bedrooms && isNaN(Number(bedrooms))) e.bedrooms = t("errorMustBeNumber");
+    if (rooms && isNaN(Number(rooms))) e.rooms = t("errorMustBeNumber");
+    if (sqft && isNaN(Number(sqft))) e.sqft = t("errorMustBeNumber");
     if (rating && (isNaN(Number(rating)) || Number(rating) < 0 || Number(rating) > 5))
-      e.rating = "Rating must be between 0 and 5";
-    if (!mainImages.length) e.mainImage = "A main image is required";
+      e.rating = t("errorRatingRange");
+    if (!mainImages.length) e.mainImage = t("errorMainImageRequired");
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -426,10 +429,10 @@ lng: position.lng,
         if (imgErr) throw new Error(imgErr.message);
       }
 
-      setSuccessMsg("Property added successfully! Redirecting…");
+      setSuccessMsg(t("propertyAddedSuccess"));
       setTimeout(() => navigate(-1), 2000);
     } catch (err: any) {
-      setErrorMsg(err.message || "Something went wrong. Please try again.");
+      setErrorMsg(err.message || t("genericError"));
     } finally {
       setSubmitting(false);
     }
@@ -459,14 +462,14 @@ lng: position.lng,
             onMouseEnter={e => (e.currentTarget.style.background = "#7c3aed20")}
             onMouseLeave={e => (e.currentTarget.style.background = T.tagBg)}
           >
-            <BackIcon /> Back
+            <BackIcon /> {t("back")}
           </button>
           <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
             <span style={{ color: T.accent }}><HomeIcon /></span>
             <span style={{ fontWeight: 800, fontSize: "15px", color: T.accent }}>CountryStay</span>
           </div>
         </div>
-        <div style={{ fontSize: "13px", color: T.subtext, fontWeight: 500 }}>Add New Property</div>
+        <div style={{ fontSize: "13px", color: T.subtext, fontWeight: 500 }}>{t("addNewProperty")}</div>
       </nav>
 
       {/* ── PAGE ── */}
@@ -475,10 +478,10 @@ lng: position.lng,
         {/* Page title */}
         <div style={{ marginBottom: "32px" }}>
           <h1 style={{ margin: 0, fontWeight: 800, fontSize: "clamp(22px,4vw,30px)", lineHeight: 1.2 }}>
-            Add New Property
+            {t("addNewProperty")}
           </h1>
           <p style={{ margin: "8px 0 0", color: T.subtext, fontSize: "14px" }}>
-            Fill in the details below to list your property.
+            {t("fillDetailsSubtitle")}
           </p>
         </div>
 
@@ -486,34 +489,34 @@ lng: position.lng,
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
 
           {/* Basic Info */}
-          <SectionCard title="Basic Information">
+          <SectionCard title={t("basicInformation")}>
             <div className="ap-grid-2">
               <div>
-                <Label required>Property Name</Label>
-                <Input value={name} onChange={setName} placeholder="e.g. Modern Villa" error={errors.name} />
+                <Label required>{t("propertyName")}</Label>
+                <Input value={name} onChange={setName} placeholder={t("modernVillaPlaceholder")} error={errors.name} />
               </div>
               <div>
-                <Label>Title</Label>
-                <Input value={title} onChange={setTitle} placeholder="e.g. Luxury 3-Bed Home" />
+                <Label>{t("titleLabel")}</Label>
+                <Input value={title} onChange={setTitle} placeholder={t("luxuryHomePlaceholder")} />
               </div>
             </div>
             <div className="ap-grid-2">
               <div>
-                <Label required>Location</Label>
-                <Input value={location} onChange={setLocation} placeholder="e.g. Dubai, UAE" error={errors.location} />
+                <Label required>{t("location")}</Label>
+                <Input value={location} onChange={setLocation} placeholder={t("dubaiPlaceholder")} error={errors.location} />
               </div>
               <div>
-                <Label>Address</Label>
-                <Input value={address} onChange={setAddress} placeholder="Street address" />
+                <Label>{t("address")}</Label>
+                <Input value={address} onChange={setAddress} placeholder={t("streetAddressPlaceholder")} />
               </div>
             </div>
           </SectionCard>
 
           {/* Pricing */}
-          <SectionCard title="Pricing">
+          <SectionCard title={t("pricing")}>
             <div>
-              <Label required>Monthly Price ($)</Label>
-              <Input value={price} onChange={setPrice} type="number" placeholder="e.g. 2500" error={errors.price} />
+              <Label required>{t("monthlyPrice")}</Label>
+              <Input value={price} onChange={setPrice} type="number" placeholder={t("pricePlaceholder")} error={errors.price} />
             </div>
           </SectionCard>
 <MapContainer
@@ -548,7 +551,7 @@ lng: position.lng,
   />
 </MapContainer>
           {/* Property Details */}
-        <SectionCard title="Amenities">
+        <SectionCard title={t("amenities")}>
   {/* Input + Add Button */}
   <div
     style={{
@@ -560,7 +563,7 @@ lng: position.lng,
     <input
       value={amenityInput}
       onChange={(e) => setAmenityInput(e.target.value)}
-      placeholder="Add amenity (WiFi, Pool, Gym...)"
+      placeholder={t("addAmenityPlaceholder")}
       style={{
         flex: 1,
         padding: "11px 14px",
@@ -588,7 +591,7 @@ lng: position.lng,
         whiteSpace: "nowrap",
       }}
     >
-      + Add
+      + {t("add")}
     </button>
   </div>
 
@@ -674,87 +677,87 @@ lng: position.lng,
     </div>
   )}
 </SectionCard>
-          <SectionCard title="Landlord Information">
+          <SectionCard title={t("landlordInformation")}>
   <div className="ap-grid-2">
     <div>
-      <Label>Landlord Name</Label>
+      <Label>{t("landlordName")}</Label>
       <Input
         value={landlordName}
         onChange={setLandlordName}
-        placeholder="John Smith"
+        placeholder={t("johnSmithPlaceholder")}
       />
     </div>
 
     <div>
-      <Label>Phone Number</Label>
+      <Label>{t("phoneNumber")}</Label>
       <Input
         value={landlordPhone}
         onChange={setLandlordPhone}
-        placeholder="+251..."
+        placeholder={t("phonePlaceholder")}
       />
     </div>
   </div>
 
   <div className="ap-grid-2">
     <div>
-      <Label>Email</Label>
+      <Label>{t("email")}</Label>
       <Input
         value={landlordEmail}
         onChange={setLandlordEmail}
-        placeholder="john@email.com"
+        placeholder={t("emailPlaceholder")}
       />
     </div>
 
     <div>
-      <Label>WhatsApp</Label>
+      <Label>{t("whatsapp")}</Label>
       <Input
         value={landlordWhatsapp}
         onChange={setLandlordWhatsapp}
-        placeholder="+251..."
+        placeholder={t("phonePlaceholder")}
       />
     </div>
   </div>
 
   <div>
-    <Label>Telegram Username</Label>
+    <Label>{t("telegramUsername")}</Label>
     <Input
       value={landlordTelegram}
       onChange={setLandlordTelegram}
-      placeholder="@username"
+      placeholder={t("telegramPlaceholder")}
     />
   </div>
 </SectionCard>
-          <SectionCard title="Property Details">
+          <SectionCard title={t("propertyDetails")}>
             <div className="ap-grid-3">
               <div>
-                <Label>Rooms</Label>
-                <Input value={rooms} onChange={setRooms} type="number" placeholder="e.g. 5" />
+                <Label>{t("rooms")}</Label>
+                <Input value={rooms} onChange={setRooms} type="number" placeholder={t("roomsPlaceholder5")} />
               </div>
               <div>
-                <Label>Bedrooms</Label>
-                <Input value={bedrooms} onChange={setBedrooms} type="number" placeholder="e.g. 3" error={errors.bedrooms} />
+                <Label>{t("bedrooms")}</Label>
+                <Input value={bedrooms} onChange={setBedrooms} type="number" placeholder={t("bedroomsPlaceholder")} error={errors.bedrooms} />
               </div>
               <div>
-                <Label>Rooms</Label>
-                <Input value={rooms} onChange={setRooms} type="number" placeholder="e.g. 2" error={errors.rooms} />
+                <Label>{t("rooms")}</Label>
+                <Input value={rooms} onChange={setRooms} type="number" placeholder={t("roomsPlaceholder2")} error={errors.rooms} />
               </div>
             </div>
             <div className="ap-grid-2">
               <div>
-                <Label>Square Feet</Label>
-                <Input value={sqft} onChange={setSqft} type="number" placeholder="e.g. 1800" error={errors.sqft} />
+                <Label>{t("squareFeet")}</Label>
+                <Input value={sqft} onChange={setSqft} type="number" placeholder={t("sqftPlaceholder")} error={errors.sqft} />
               </div>
               <div>
-                <Label>Rating (0–5)</Label>
-                <Input value={rating} onChange={setRating} type="number" placeholder="e.g. 4.5" error={errors.rating} />
+                <Label>{t("ratingLabel")}</Label>
+                <Input value={rating} onChange={setRating} type="number" placeholder={t("ratingPlaceholder")} error={errors.rating} />
               </div>
             </div>
           </SectionCard>
 
           {/* Main Image */}
-          <SectionCard title="Main Image">
+          <SectionCard title={t("mainImage")}>
             {mainImages.length === 0 ? (
-              <ImageDropZone label="Upload Main Property Image" onFiles={addMainImages} />
+              <ImageDropZone label={t("uploadMainImage")} onFiles={addMainImages} />
             ) : (
               <ImagePreviewGrid images={mainImages} onRemove={removeMain} />
             )}
@@ -764,12 +767,12 @@ lng: position.lng,
           </SectionCard>
 
           {/* Extra Images */}
-          <SectionCard title="Extra Images">
-            <ImageDropZone label="Upload Additional Images" onFiles={addExtraImages} multiple />
+          <SectionCard title={t("extraImages")}>
+            <ImageDropZone label={t("uploadAdditionalImages")} onFiles={addExtraImages} multiple />
             <ImagePreviewGrid images={extraImages} onRemove={removeExtra} />
             {extraImages.length > 0 && (
               <p style={{ margin: 0, fontSize: "12px", color: T.subtext }}>
-                {extraImages.length} image{extraImages.length !== 1 ? "s" : ""} selected
+                {t("imagesSelected", { count: extraImages.length })}
               </p>
             )}
             {extraImages.length > 0 && (
@@ -787,7 +790,7 @@ lng: position.lng,
                 onMouseEnter={e => { e.currentTarget.style.borderColor = T.accent; e.currentTarget.style.color = T.accent; }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.color = T.subtext; }}
               >
-                <PlusIcon /> Add More Images
+                <PlusIcon /> {t("addMoreImages")}
                 <input
                   id="ap-extra-trigger"
                   type="file"
@@ -851,9 +854,9 @@ lng: position.lng,
                   borderTopColor: "transparent", borderRadius: "50%",
                   animation: "ap-spin 0.7s linear infinite", display: "inline-block",
                 }} />
-                Uploading & Saving…
+                {t("uploadingSaving")}
               </>
-            ) : "Add Property"}
+            ) : t("addPropertyBtn")}
           </button>
         </div>
       </div>

@@ -44,6 +44,26 @@ const theme = {
   },
 };
 
+// ─── Pending action helpers (guest → signup → resume) ─────────────────────
+const PENDING_ACTION_KEY = "pendingPropertyAction";
+type PendingAction = "save" | "share" | "contact";
+
+function savePendingAction(propertyId: string, action: PendingAction) {
+  localStorage.setItem(PENDING_ACTION_KEY, JSON.stringify({ propertyId, action }));
+}
+function getPendingAction(): { propertyId: string; action: PendingAction } | null {
+  const raw = localStorage.getItem(PENDING_ACTION_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+function clearPendingAction() {
+  localStorage.removeItem(PENDING_ACTION_KEY);
+}
+
 // ─── Icons ────────────────────────────────────────────────────────────────
 const BackIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -107,32 +127,39 @@ export default function PropertyDetails() {
 
   const [property, setProperty] = useState<any>(null);
   const [images, setImages] = useState<any[]>([]);
-const [selectedImage, setSelectedImage] = useState("");
+  const [selectedImage, setSelectedImage] = useState("");
 
   const [loading, setLoading] = useState(true);
   const { dark } = useTheme();
-const [saved, setSaved] = useState(false);
-const [showAgent, setShowAgent] = useState(false);
-useEffect(() => {
-  checkSaved();
-}, []);
+  const [saved, setSaved] = useState(false);
+  const [showAgent, setShowAgent] = useState(false);
 
-async function checkSaved() {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  useEffect(() => {
+    checkSaved();
+  }, []);
 
-  if (!user) return;
+  // Resume whatever action the user wanted once we know the property + they're logged in
+  useEffect(() => {
+    if (!property) return;
+    resumePendingAction();
+  }, [property]);
 
-  const { data } = await supabase
-    .from("favorites")
-    .select("*")
-    .eq("user_id", user.id)
-    .eq("property_id", id)
-  .maybeSingle();
+  async function checkSaved() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  setSaved(!!data);
-}
+    if (!user) return;
+
+    const { data } = await supabase
+      .from("favorites")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("property_id", id)
+      .maybeSingle();
+
+    setSaved(!!data);
+  }
 
   const t_ = dark ? theme.dark : theme.light;
 
@@ -147,86 +174,119 @@ async function checkSaved() {
     setProperty(data);
     setLoading(false);
     const { data: propertyData } = await supabase
-  .from("properties")
-  .select("*")
-  .eq("id", id)
-  .single();
+      .from("properties")
+      .select("*")
+      .eq("id", id)
+      .single();
 
-const { data: imageData } = await supabase
-  .from("property_images")
-  .select("*")
-  .eq("property_id", id);
+    const { data: imageData } = await supabase
+      .from("property_images")
+      .select("*")
+      .eq("property_id", id);
 
-setProperty(propertyData);
+    setProperty(propertyData);
 
-setImages(imageData || []);
+    setImages(imageData || []);
 
-if (imageData && imageData.length > 0) {
-  setSelectedImage(imageData[0].image_url);
-}
-  }
-async function toggleSave() {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    navigate("/signup");
-    return;
-  }
-  
-if (saved) {
-  const { data, error } = await supabase
-    .from("favorites")
-    .delete()
-    .eq("property_id", Number(id))
-    .select();
-
-  console.log("DELETED ROWS:", data);
-  console.log("DELETE ERROR:", error);
-
-  if (!error) {
-    setSaved(false);
+    if (imageData && imageData.length > 0) {
+      setSelectedImage(imageData[0].image_url);
+    }
   }
 
-  return;
-}else {
-    const { error } = await supabase
-      .from("favorites")
-      .insert({
-        user_id: user.id,
-        property_id: Number(id),
-      });
+  // ── Auth gate: if guest, remember what they wanted and send to signup ───
+  async function requireAuth(action: PendingAction) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    if (error) {
-      console.log(error);
+    if (!user) {
+      savePendingAction(id as string, action);
+      navigate(`/signup?redirect=/property/${id}`);
+      return null;
+    }
+    return user;
+  }
+
+  // ── After coming back from signup, finish the original action ──────────
+  async function resumePendingAction() {
+    const pending = getPendingAction();
+    if (!pending || String(pending.propertyId) !== String(id)) return;
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return; // still not logged in, nothing to resume
+
+    clearPendingAction();
+    await checkSaved();
+
+    if (pending.action === "save") await toggleSave();
+    else if (pending.action === "share") await handleShare();
+    else if (pending.action === "contact") setShowAgent(true);
+  }
+
+  async function toggleSave() {
+    const user = await requireAuth("save");
+    if (!user) return;
+
+    if (saved) {
+      const { error } = await supabase
+        .from("favorites")
+        .delete()
+        .eq("property_id", Number(id))
+        .eq("user_id", user.id);
+
+      if (!error) {
+        setSaved(false);
+      }
       return;
-    }
-
-    setSaved(true);
-  }
-
-}
-async function handleShare() {
-  const propertyUrl = `${window.location.origin}/property/${property.id}`;
-
-  const shareData = {
-    title: property.name,
-    text: `${t("shareText", "Check out this property")}: ${property.name}`,
-    url: propertyUrl,
-  };
-
-  try {
-    if (navigator.share) {
-      await navigator.share(shareData);
     } else {
-      await navigator.clipboard.writeText(propertyUrl);
-      alert(t("linkCopied", "Property link copied to clipboard!"));
+      const { error } = await supabase
+        .from("favorites")
+        .insert({
+          user_id: user.id,
+          property_id: Number(id),
+        });
+
+      if (error) {
+        console.log(error);
+        return;
+      }
+
+      setSaved(true);
     }
-  } catch (error) {
-    console.log("Share cancelled", error);
   }
-}
+
+  async function handleShare() {
+    const user = await requireAuth("share");
+    if (!user) return;
+
+    const propertyUrl = `${window.location.origin}/property/${property.id}`;
+
+    const shareData = {
+      title: property.name,
+      text: `${t("shareText", "Check out this property")}: ${property.name}`,
+      url: propertyUrl,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(propertyUrl);
+        alert(t("linkCopied", "Property link copied to clipboard!"));
+      }
+    } catch (error) {
+      console.log("Share cancelled", error);
+    }
+  }
+
+  async function handleContactAgent() {
+    const user = await requireAuth("contact");
+    if (!user) return;
+    setShowAgent(true);
+  }
+
   // ── Loading ──────────────────────────────────────────────────────────
   if (loading) {
     return (
@@ -283,21 +343,21 @@ async function handleShare() {
     justifyContent: "flex-end",
   }}
 >
-          <button
-            onClick={() => navigate(-1)}
-            style={{
-              display: "flex", alignItems: "center", gap: "7px",
-              background: dark ? "#1e1e38" : "#f0f0fa",
-              border: "none", borderRadius: "9px",
-              padding: "7px 14px", color: t_.text,
-              fontSize: "13px", fontWeight: 600, cursor: "pointer",
-              transition: "background 0.2s",
-            }}
-            onMouseEnter={e => (e.currentTarget.style.background = "#7c3aed20")}
-            onMouseLeave={e => (e.currentTarget.style.background = dark ? "#1e1e38" : "#f0f0fa")}
-          >
-            <BackIcon /> {t("back", "Back")}
-          </button>
+        <button
+  onClick={() => navigate("/")}
+  style={{
+    display: "flex", alignItems: "center", gap: "7px",
+    background: dark ? "#1e1e38" : "#f0f0fa",
+    border: "none", borderRadius: "9px",
+    padding: "7px 14px", color: t_.text,
+    fontSize: "13px", fontWeight: 600, cursor: "pointer",
+    transition: "background 0.2s",
+  }}
+  onMouseEnter={e => (e.currentTarget.style.background = "#7c3aed20")}
+  onMouseLeave={e => (e.currentTarget.style.background = dark ? "#1e1e38" : "#f0f0fa")}
+>
+  <BackIcon /> {t("back", "Back")}
+</button>
           
         </div>
 
@@ -599,7 +659,7 @@ async function handleShare() {
               </div>
 
               <button
-  onClick={() => setShowAgent(true)}
+  onClick={handleContactAgent}
   style={{
     width: "100%",
     padding: "13px",

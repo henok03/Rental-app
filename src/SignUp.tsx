@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { supabase } from "./supabaseClient";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import LanguageToggle from "./LanguageToggle";
 import { useTranslation } from "react-i18next";
 // ─── Theme ────────────────────────────────────────────────────────────────
@@ -89,6 +89,11 @@ function InputField({
 // ─── Main Component ───────────────────────────────────────────────────────
 export default function SignUp() {
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
+  // Where to send the user after signup succeeds. Defaults to homepage
+  // if nobody sent them here with a ?redirect= link.
+const redirectTo = searchParams.get("redirect") || "/";
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -123,8 +128,12 @@ export default function SignUp() {
         if (profileError) console.error(profileError);
       }
 
-      setSuccessMsg(t("accountCreatedRedirecting", "Account created! Redirecting…"));
-      setTimeout(() => navigate("/"), 2000);
+     setSuccessMsg(t("accountCreatedRedirecting", "Account created! Redirecting…"));
+console.log("DEBUG redirectTo:", redirectTo);
+setTimeout(() => {
+
+  navigate(redirectTo);
+}, 2000);
     } catch (err: any) {
       setErrorMsg(err.message || t("somethingWentWrong", "Something went wrong."));
     } finally {
@@ -160,7 +169,9 @@ export default function SignUp() {
     <div style={{ position: 'absolute', top: '16px', right: '120px', zIndex: 50 }}>
   <LanguageToggle dark={true} t={T} />
 </div>
-        <Link to="/login" style={{
+        <Link
+          to={`/login${redirectTo !== "/" ? `?redirect=${encodeURIComponent(redirectTo)}` : ""}`}
+          style={{
           fontSize: "13px", fontWeight: 600, color: T.subtext,
           textDecoration: "none", padding: "7px 16px",
           border: `1px solid ${T.border}`, borderRadius: "9px",
@@ -289,7 +300,7 @@ export default function SignUp() {
 
               {/* Login link */}
               <Link
-                to="/login"
+                to={`/login${redirectTo !== "/" ? `?redirect=${encodeURIComponent(redirectTo)}` : ""}`}
                 style={{
                   display: "block", textAlign: "center",
                   padding: "12px",

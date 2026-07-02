@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "./supabaseClient";
 import { useNavigate } from "react-router-dom";
 interface Property {
@@ -52,6 +53,7 @@ function PropertyCard({
   onToggleFavorite: (id: number) => void;
   index: number;
 }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (
@@ -139,7 +141,7 @@ function PropertyCard({
             marginBottom: "14px",
           }}
         >
-         ${Number(property.price).toLocaleString()} / month
+         ${Number(property.price).toLocaleString()} {t("perMonth")}
         </p>
 
 {/* Bottom Info */}
@@ -165,7 +167,7 @@ function PropertyCard({
       <circle cx="12" cy="7" r="4" />
     </svg>
     <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-      {property.landlord_name || "Host"}
+      {property.landlord_name || t("host")}
     </span>
   </div>
 
@@ -178,7 +180,7 @@ function PropertyCard({
         <path d="M3 9h18M9 21V3" />
       </svg>
       <span>
-        {property.rooms } { (property.rooms ) === 1 ? 'Room' : 'Rooms' }
+        {t("roomsCount", { count: property.rooms })}
       </span>
     </div>
 
@@ -212,6 +214,7 @@ export default function HomeList({
   onToggleFavorite,
   showFavoritesOnly,
 }: HomeListProps) {
+  const { t } = useTranslation();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -308,7 +311,7 @@ console.log(filteredProperties);
           transition: "color 0.3s",
         }}
       >
-        Popular Homes
+        {t("popularHomes")}
       </h2>
 
       <p
@@ -317,21 +320,21 @@ console.log(filteredProperties);
           marginBottom: "30px",
         }}
       >
-        Explore handpicked homes in top locations.
+        {t("exploreHandpickedHomes")}
       </p>
 
       {/* ANIMATION ADDED: "cs-spinner" gives the loading state an actual spinning indicator instead of static text */}
       {loading && (
         <p style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <span className="cs-spinner" />
-          Loading properties...
+          {t("loadingProperties")}
         </p>
       )}
 
       {/* ANIMATION ADDED: "cs-error-in" makes the error message shake briefly to draw attention */}
       {error && (
         <p className="cs-error-in" style={{ color: "red" }}>
-          Error: {error}
+          {t("errorPrefix")} {error}
         </p>
       )}
 
