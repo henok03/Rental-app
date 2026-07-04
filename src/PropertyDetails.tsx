@@ -24,6 +24,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl:
     "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
+
 // ─── Theme ────────────────────────────────────────────────────────────────
 const theme = {
   dark: {
@@ -64,6 +65,15 @@ function clearPendingAction() {
   localStorage.removeItem(PENDING_ACTION_KEY);
 }
 
+// ─── Value helpers ─────────────────────────────────────────────────────────
+// Central definition of "empty" used everywhere on this page.
+function hasValue(v: unknown): boolean {
+  if (v === null || v === undefined) return false;
+  if (typeof v === "string" && v.trim() === "") return false;
+  if (typeof v === "number" && Number.isNaN(v)) return false;
+  return true;
+}
+
 // ─── Icons ────────────────────────────────────────────────────────────────
 const BackIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -78,6 +88,11 @@ const BedIcon = () => (
 const BathIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M4 10h16v4a6 6 0 01-6 6H10a6 6 0 01-6-6v-4z"/><line x1="4" y1="10" x2="20" y2="10"/>
+  </svg>
+);
+const RoomsIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M9 10v10"/>
   </svg>
 );
 const AreaIcon = () => (
@@ -106,7 +121,6 @@ const ShareIcon = () => (
     <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
   </svg>
 );
-
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────
 function Skeleton({ w = "100%", h = "20px", radius = "8px", dark = true }) {
@@ -166,13 +180,6 @@ export default function PropertyDetails() {
   useEffect(() => { fetchProperty(); }, []);
 
   async function fetchProperty() {
-    const { data } = await supabase
-      .from("properties")
-      .select("*")
-      .eq("id", id)
-      .single();
-    setProperty(data);
-    setLoading(false);
     const { data: propertyData } = await supabase
       .from("properties")
       .select("*")
@@ -185,12 +192,13 @@ export default function PropertyDetails() {
       .eq("property_id", id);
 
     setProperty(propertyData);
-
     setImages(imageData || []);
 
     if (imageData && imageData.length > 0) {
       setSelectedImage(imageData[0].image_url);
     }
+
+    setLoading(false);
   }
 
   // ── Auth gate: if guest, remember what they wanted and send to signup ───
@@ -236,23 +244,17 @@ export default function PropertyDetails() {
         .eq("property_id", Number(id))
         .eq("user_id", user.id);
 
-      if (!error) {
-        setSaved(false);
-      }
+      if (!error) setSaved(false);
       return;
     } else {
       const { error } = await supabase
         .from("favorites")
-        .insert({
-          user_id: user.id,
-          property_id: Number(id),
-        });
+        .insert({ user_id: user.id, property_id: Number(id) });
 
       if (error) {
         console.log(error);
         return;
       }
-
       setSaved(true);
     }
   }
@@ -319,6 +321,44 @@ export default function PropertyDetails() {
     );
   }
 
+  // ── Derived / filtered data ─────────────────────────────────────────
+  // Stat tiles (top card) — only entries whose value exists survive.
+  const statTiles = [
+    { key: "rooms", icon: <RoomsIcon />, value: property.rooms, label: t("rooms", "Rooms") },
+    { key: "bedrooms", icon: <BedIcon />, value: property.bedrooms, label: t("bedrooms", "Bedrooms") },
+    { key: "bathrooms", icon: <BathIcon />, value: property.bathrooms, label: t("bathrooms", "Bathrooms") },
+    { key: "sqft", icon: <AreaIcon />, value: hasValue(property.sqft) ? `${property.sqft} ${t("sqft", "sqft")}` : property.sqft, label: t("area", "Area") },
+  ].filter((tile) => hasValue(tile.value));
+
+  // Property Information grid — same source data, different section.
+  const infoFields = [
+    { key: "address", label: t("address", "Address"), value: property.address },
+    { key: "bedrooms", label: t("bedrooms", "Bedrooms"), value: property.bedrooms },
+    { key: "bathrooms", label: t("bathrooms", "Bathrooms"), value: property.bathrooms },
+    { key: "rooms", label: t("rooms", "Rooms"), value: property.rooms },
+    { key: "area", label: t("area", "Area"), value: hasValue(property.sqft) ? `${property.sqft} ${t("sqft", "sqft")}` : property.sqft },
+  ].filter((field) => hasValue(field.value));
+
+  const hasAmenities = Array.isArray(property.amenities) && property.amenities.length > 0;
+  const hasLocation = hasValue(property.lat) && hasValue(property.lng);
+  const hasPrice = hasValue(property.price) && !Number.isNaN(Number(property.price));
+  const hasRating = hasValue(property.rating);
+  const hasExtraImages = images.length > 0;
+
+  // Landlord contact info — used inside the modal.
+  const landlordName = property.landlord_name;
+  const landlordPhone = property.landlord_phone;
+  const landlordEmail = property.landlord_email;
+  const landlordWhatsapp = property.landlord_whatsapp;
+  const landlordTelegram = property.landlord_telegram;
+
+  const hasContactButtons = hasValue(landlordWhatsapp) || hasValue(landlordTelegram);
+  const hasAnyLandlordInfo =
+    hasValue(landlordName) ||
+    hasValue(landlordPhone) ||
+    hasValue(landlordEmail) ||
+    hasContactButtons;
+
   // ── Main render ──────────────────────────────────────────────────────
   return (
     <div style={{ minHeight: "100vh", background: t_.bg, color: t_.text, fontFamily: "'DM Sans', 'Segoe UI', sans-serif", transition: "background 0.3s, color 0.3s" }}>
@@ -334,78 +374,54 @@ export default function PropertyDetails() {
         height: "62px",
         display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
-       <div
-  style={{
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    flexWrap: "wrap",
-    justifyContent: "flex-end",
-  }}
->
-        <button
-  onClick={() => navigate("/")}
-  style={{
-    display: "flex", alignItems: "center", gap: "7px",
-    background: dark ? "#1e1e38" : "#f0f0fa",
-    border: "none", borderRadius: "9px",
-    padding: "7px 14px", color: t_.text,
-    fontSize: "13px", fontWeight: 600, cursor: "pointer",
-    transition: "background 0.2s",
-  }}
-  onMouseEnter={e => (e.currentTarget.style.background = "#7c3aed20")}
-  onMouseLeave={e => (e.currentTarget.style.background = dark ? "#1e1e38" : "#f0f0fa")}
->
-  <BackIcon /> {t("back", "Back")}
-</button>
-          
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", justifyContent: "flex-end" }}>
+          <button
+            onClick={() => navigate("/")}
+            style={{
+              display: "flex", alignItems: "center", gap: "7px",
+              background: dark ? "#1e1e38" : "#f0f0fa",
+              border: "none", borderRadius: "9px",
+              padding: "7px 14px", color: t_.text,
+              fontSize: "13px", fontWeight: 600, cursor: "pointer",
+              transition: "background 0.2s",
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = "#7c3aed20")}
+            onMouseLeave={e => (e.currentTarget.style.background = dark ? "#1e1e38" : "#f0f0fa")}
+          >
+            <BackIcon /> {t("back", "Back")}
+          </button>
         </div>
 
-       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-
-
-      <button
-  onClick={toggleSave}
-  style={{
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-    background: saved
-      ? "rgba(124,58,237,0.15)"
-      : (dark ? "#1e1e38" : "#f0f0fa"),
-    border: `1px solid ${saved ? "#7c3aed" : t_.border}`,
-    borderRadius: "9px",
-    padding: "7px 14px",
-    color: saved ? "#7c3aed" : t_.text,
-    fontSize: "13px",
-    fontWeight: 600,
-    cursor: "pointer",
-    transition: "all 0.2s",
-  }}
->
-  <HeartIcon />
-  {saved ? t("saved", "Saved") : t("save", "Save")}
-</button>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <button
+            onClick={toggleSave}
+            style={{
+              display: "flex", alignItems: "center", gap: "6px",
+              background: saved ? "rgba(124,58,237,0.15)" : (dark ? "#1e1e38" : "#f0f0fa"),
+              border: `1px solid ${saved ? "#7c3aed" : t_.border}`,
+              borderRadius: "9px", padding: "7px 14px",
+              color: saved ? "#7c3aed" : t_.text,
+              fontSize: "13px", fontWeight: 600, cursor: "pointer",
+              transition: "all 0.2s",
+            }}
+          >
+            <HeartIcon />
+            {saved ? t("saved", "Saved") : t("save", "Save")}
+          </button>
 
           <button
-  onClick={handleShare}
-  style={{
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-    background: dark ? "#1e1e38" : "#f0f0fa",
-    border: `1px solid ${t_.border}`,
-    borderRadius: "9px",
-    padding: "7px 14px",
-    color: t_.text,
-    fontSize: "13px",
-    fontWeight: 600,
-    cursor: "pointer",
-  }}
->
-  <ShareIcon />
-  {t("share", "Share")}
-</button>
+            onClick={handleShare}
+            style={{
+              display: "flex", alignItems: "center", gap: "6px",
+              background: dark ? "#1e1e38" : "#f0f0fa",
+              border: `1px solid ${t_.border}`,
+              borderRadius: "9px", padding: "7px 14px",
+              color: t_.text, fontSize: "13px", fontWeight: 600, cursor: "pointer",
+            }}
+          >
+            <ShareIcon />
+            {t("share", "Share")}
+          </button>
         </div>
       </div>
 
@@ -415,43 +431,31 @@ export default function PropertyDetails() {
         {/* ── IMAGE ── */}
         <div style={{ borderRadius: "20px", overflow: "hidden", position: "relative" }}>
           <img
-  src={selectedImage || property.image_url}
-  alt={property.name}
-  style={{
-    width: "100%",
-    height: "500px",
-    objectFit: "cover",
-  }}
-/>
-<div
-  style={{
-    display: "flex",
-    gap: "10px",
-    marginTop: "10px",
-    flexWrap: "wrap",
-  }}
->
-  {images.map((img) => (
-    <img
-      key={img.id}
-      src={img.image_url}
-      alt=""
-      onClick={() =>
-        setSelectedImage(img.image_url)
-      }
-      style={{
-        width: "100px",
-        height: "80px",
-        objectFit: "cover",
-        borderRadius: "8px",
-        cursor: "pointer",
-      }}
-    />
-  ))}
-</div>
+            src={selectedImage || property.image_url}
+            alt={property.name}
+            style={{ width: "100%", height: "500px", objectFit: "cover" }}
+          />
+
+          {hasExtraImages && (
+            <div style={{ display: "flex", gap: "10px", marginTop: "10px", flexWrap: "wrap" }}>
+              {images.map((img) => (
+                <img
+                  key={img.id}
+                  src={img.image_url}
+                  alt=""
+                  onClick={() => setSelectedImage(img.image_url)}
+                  style={{
+                    width: "100px", height: "80px",
+                    objectFit: "cover", borderRadius: "8px", cursor: "pointer",
+                    border: selectedImage === img.image_url ? "2px solid #7c3aed" : "2px solid transparent",
+                  }}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Rating badge — only if rating exists in DB */}
-          {property.rating != null && (
+          {hasRating && (
             <div style={{
               position: "absolute", top: "16px", left: "16px",
               background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)",
@@ -488,57 +492,54 @@ export default function PropertyDetails() {
                   <h1 style={{ margin: 0, fontSize: "clamp(20px,3.5vw,28px)", fontWeight: 800, lineHeight: 1.2 }}>
                     {property.name}
                   </h1>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "10px", color: t_.subtext, fontSize: "14px" }}>
-                    <PinIcon /> {property.location}
-                  </div>
+                  {hasValue(property.location) && (
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "10px", color: t_.subtext, fontSize: "14px" }}>
+                      <PinIcon /> {property.location}
+                    </div>
+                  )}
                 </div>
-                <div style={{
-                  background: "linear-gradient(135deg,#7c3aed15,#5b21b615)",
-                  border: "1px solid #7c3aed40",
-                  borderRadius: "12px", padding: "10px 18px", textAlign: "right", flexShrink: 0,
-                }}>
-                  <div style={{ color: "#7c3aed", fontWeight: 800, fontSize: "clamp(20px,3vw,26px)", lineHeight: 1 }}>
-                    ${property.price.toLocaleString()}
+
+                {hasPrice && (
+                  <div style={{
+                    background: "linear-gradient(135deg,#7c3aed15,#5b21b615)",
+                    border: "1px solid #7c3aed40",
+                    borderRadius: "12px", padding: "10px 18px", textAlign: "right", flexShrink: 0,
+                  }}>
+                    <div style={{ color: "#7c3aed", fontWeight: 800, fontSize: "clamp(20px,3vw,26px)", lineHeight: 1 }}>
+                      ${Number(property.price).toLocaleString()}
+                    </div>
+                    <div style={{ color: t_.subtext, fontSize: "12px", marginTop: "3px" }}>{t("perMonth", "per month")}</div>
                   </div>
-                  <div style={{ color: t_.subtext, fontSize: "12px", marginTop: "3px" }}>{t("perMonth", "per month")}</div>
-                </div>
+                )}
               </div>
 
-              {/* Stat tiles */}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", marginTop: "20px" }}>
-                {[
-                     { icon: <BathIcon />, value: property.rooms, label: t("rooms", "Rooms") },
-                  { icon: <BedIcon />, value: property.bedrooms, label: t("bedrooms", "Bedrooms") },
-               
-                  { icon: <AreaIcon />, value: `${property.sqft}`, label: t("sqft", "sqft") },
-                ].map(({ icon, value, label }) => (
-                  <div key={label} style={{
-                    flex: "1 1 90px",
-                    background: dark ? "#1e1e38" : "#f4f4f9",
-                    borderRadius: "12px", padding: "14px 16px",
-                    display: "flex", flexDirection: "column", gap: "8px",
-                    border: `1px solid ${t_.border}`,
-                  }}>
-                    {icon}
-                    <div style={{ fontWeight: 800, fontSize: "18px", color: t_.text }}>{value}</div>
-                    <div style={{ fontSize: "12px", color: t_.subtext }}>{label}</div>
-                  </div>
-                ))}
-              </div>
+              {/* Stat tiles — only tiles with real values render */}
+              {statTiles.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", marginTop: "20px" }}>
+                  {statTiles.map(({ key, icon, value, label }) => (
+                    <div key={key} style={{
+                      flex: "1 1 90px",
+                      background: dark ? "#1e1e38" : "#f4f4f9",
+                      borderRadius: "12px", padding: "14px 16px",
+                      display: "flex", flexDirection: "column", gap: "8px",
+                      border: `1px solid ${t_.border}`,
+                    }}>
+                      {icon}
+                      <div style={{ fontWeight: 800, fontSize: "18px", color: t_.text }}>{value}</div>
+                      <div style={{ fontSize: "12px", color: t_.subtext }}>{label}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Property info — only real DB fields */}
-            <div style={{ background: t_.cardBg, borderRadius: "16px", padding: "clamp(16px,3vw,26px)", border: `1px solid ${t_.border}` }}>
-              <h3 style={{ margin: "0 0 16px", fontWeight: 700, fontSize: "16px" }}>{t("propertyInformation", "Property Information")}</h3>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px,1fr))", gap: "12px" }}>
-                {[
-                  [t("address", "Address"),   property.address],
-                  [t("bedrooms", "Bedrooms"),  property.bedrooms],
-                  [t("rooms", "Rooms"), property.rooms],
-                  [t("area", "Area"),      `${property.sqft} ${t("sqft", "sqft")}`],
-                ].map(([label, value]) => (
-                  value != null && value !== "" ? (
-                    <div key={label as string} style={{
+            {/* Property info — only renders if at least one field has data */}
+            {infoFields.length > 0 && (
+              <div style={{ background: t_.cardBg, borderRadius: "16px", padding: "clamp(16px,3vw,26px)", border: `1px solid ${t_.border}` }}>
+                <h3 style={{ margin: "0 0 16px", fontWeight: 700, fontSize: "16px" }}>{t("propertyInformation", "Property Information")}</h3>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px,1fr))", gap: "12px" }}>
+                  {infoFields.map(({ key, label, value }) => (
+                    <div key={key} style={{
                       background: dark ? "#1a1a30" : "#f8f8fc",
                       borderRadius: "10px", padding: "12px 16px",
                       border: `1px solid ${t_.border}`,
@@ -546,104 +547,54 @@ export default function PropertyDetails() {
                       <div style={{ fontSize: "11px", color: t_.subtext, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "5px" }}>{label}</div>
                       <div style={{ fontWeight: 600, fontSize: "14px", color: t_.text }}>{value}</div>
                     </div>
-                  ) : null
-                ))}
+                  ))}
+                </div>
               </div>
+            )}
+
+            {/* Amenities — hidden entirely if none exist */}
+            {hasAmenities && (
+              <div style={{ background: t_.cardBg, borderRadius: "16px", padding: "24px", border: `1px solid ${t_.border}` }}>
+                <h3 style={{ marginBottom: "16px", fontWeight: 700 }}>{t("amenities", "Amenities")}</h3>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+                  {property.amenities.map((item: string) => (
+                    <div
+                      key={item}
+                      style={{
+                        padding: "8px 14px",
+                        borderRadius: "999px",
+                        background: "rgba(124,58,237,0.15)",
+                        border: "1px solid rgba(124,58,237,0.4)",
+                        color: "#c4b5fd",
+                        fontWeight: 600,
+                        fontSize: "13px",
+                      }}
+                    >
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Location map */}
+            <div style={{ background: t_.cardBg, borderRadius: "16px", padding: "24px", border: `1px solid ${t_.border}` }}>
+              <h3 style={{ marginBottom: "16px", fontWeight: 700 }}>{t("locationMap", "Location Map")}</h3>
+              {hasLocation ? (
+                <MapContainer
+                  center={[property.lat, property.lng]}
+                  zoom={15}
+                  style={{ height: "400px", width: "100%", borderRadius: "12px" }}
+                >
+                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                  <Marker position={[property.lat, property.lng]} />
+                </MapContainer>
+              ) : (
+                <p style={{ color: t_.subtext, fontSize: "14px" }}>{t("locationNotAvailable", "Location not available")}</p>
+              )}
             </div>
-            <div
-  style={{
-    background: t_.cardBg,
-    borderRadius: "16px",
-    padding: "24px",
-    border: `1px solid ${t_.border}`,
-  }}
->
-  <h3
-    style={{
-      marginBottom: "16px",
-      fontWeight: 700,
-    }}
-  >
-    {t("amenities", "Amenities")}
-  </h3>
-
-  <div
-    style={{
-      display: "flex",
-      flexWrap: "wrap",
-      gap: "10px",
-    }}
-  >
-    {property.amenities?.map(
-      (item: string) => (
-        <div
-          key={item}
-          style={{
-            padding: "8px 14px",
-            borderRadius: "999px",
-            background:
-              "rgba(124,58,237,0.15)",
-            border:
-              "1px solid rgba(124,58,237,0.4)",
-            color: "#c4b5fd",
-            fontWeight: 600,
-            fontSize: "13px",
-          }}
-        >
-          {item}
-        </div>
-      )
-    )}
-  </div>
-</div>
-<div
-  style={{
-    background: t_.cardBg,
-    borderRadius: "16px",
-    padding: "24px",
-    border: `1px solid ${t_.border}`,
-  }}
->
-  <h3
-    style={{
-      marginBottom: "16px",
-      fontWeight: 700,
-    }}
-  >
-    {t("locationMap", "Location Map")}
-  </h3>
-{property?.lat && property?.lng ? (
-  <MapContainer
-    center={[
-      property.lat,
-      property.lng,
-    ]}
-    zoom={15}
-    style={{
-      height: "400px",
-      width: "100%",
-      borderRadius: "12px",
-    }}
-    
-  >
-    
-    <TileLayer
-      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-    />
-
-    <Marker
-      position={[
-        property.lat,
-        property.lng,
-      ]}
-    />
-  </MapContainer>
-  ) : (
-  <p>{t("locationNotAvailable", "Location not available")}</p>
-)}
           </div>
 
-</div>
           {/* ── RIGHT ── */}
           <div style={{ position: "sticky", top: "82px", display: "flex", flexDirection: "column", gap: "16px" }}>
 
@@ -659,138 +610,137 @@ export default function PropertyDetails() {
               </div>
 
               <button
-  onClick={handleContactAgent}
-  style={{
-    width: "100%",
-    padding: "13px",
-    background: "linear-gradient(135deg,#7c3aed,#5b21b6)",
-    color: "#fff",
-    border: "none",
-    borderRadius: "12px",
-    fontWeight: 700,
-    fontSize: "15px",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "8px",
-    boxShadow: "0 4px 16px rgba(124,58,237,0.4)",
-  }}
->
-  <PhoneIcon />
-  {t("contactAgent", "Contact Agent")}
-</button>
-{showAgent && (
-  <div
-    style={{
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.7)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 9999,
-    }}
-  >
-    <div
-      style={{
-        width: "90%",
-        maxWidth: "500px",
-        background: "#15152a",
-        borderRadius: "16px",
-        padding: "24px",
-        color: "#fff",
-      }}
-    >
-      <h2>{t("landlordInformation", "Landlord Information")}</h2>
-
-      <p>
-        <strong>{t("nameLabel", "Name")}:</strong> {property.landlord_name}
-      </p>
-
-      <p>
-        <strong>{t("phoneLabel", "Phone")}:</strong> {property.landlord_phone}
-      </p>
-
-      <p>
-        <strong>{t("emailLabel", "Email")}:</strong> {property.landlord_email}
-      </p>
-
-   <div
-  style={{
-    display: "flex",
-    gap: "12px",
-    marginTop: "15px",
-    flexWrap: "wrap",
-  }}
->
-  <a
-    href={`https://wa.me/${property.landlord_whatsapp}`}
-    target="_blank"
-    rel="noreferrer"
-    style={{
-      flex: 1,
-      minWidth: "150px",
-      textAlign: "center",
-      padding: "12px 16px",
-      background: "#25D366",
-      color: "#fff",
-      textDecoration: "none",
-      borderRadius: "10px",
-      fontWeight: 600,
-      fontSize: "14px",
-      boxShadow: "0 4px 12px rgba(37,211,102,0.3)",
-    }}
-  >
-    📱 {t("whatsappChat", "WhatsApp Chat")}
-  </a>
-
-  <a
-    href={`https://t.me/${property.landlord_telegram?.replace("@", "")}`}
-    target="_blank"
-    rel="noreferrer"
-    style={{
-      flex: 1,
-      minWidth: "150px",
-      textAlign: "center",
-      padding: "12px 16px",
-      background: "#229ED9",
-      color: "#fff",
-      textDecoration: "none",
-      borderRadius: "10px",
-      fontWeight: 600,
-      fontSize: "14px",
-      boxShadow: "0 4px 12px rgba(34,158,217,0.3)",
-    }}
-  >
-    ✈️ {t("telegramMessage", "Telegram Message")}
-  </a>
-</div>
-      <button
-        onClick={() => setShowAgent(false)}
-        style={{
-          marginTop: "15px",
-          width: "100%",
-          padding: "12px",
-          border: "none",
-          borderRadius: "10px",
-          background: "#7c3aed",
-          color: "#fff",
-          cursor: "pointer",
-        }}
-      >
-        {t("close", "Close")}
-      </button>
-    </div>
-  </div>
-)}
+                onClick={handleContactAgent}
+                style={{
+                  width: "100%", padding: "13px",
+                  background: "linear-gradient(135deg,#7c3aed,#5b21b6)",
+                  color: "#fff", border: "none", borderRadius: "12px",
+                  fontWeight: 700, fontSize: "15px", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                  boxShadow: "0 4px 16px rgba(124,58,237,0.4)",
+                }}
+              >
+                <PhoneIcon />
+                {t("contactAgent", "Contact Agent")}
+              </button>
             </div>
-
-            {/* Price card */}
-          
           </div>
         </div>
       </div>
+
+      {/* ── LANDLORD INFO MODAL ──────────────────────────────────────────
+          Rendered at the TOP LEVEL of the page (a direct sibling of the
+          page body), NOT nested inside the sticky sidebar's "Contact
+          card". It used to live inside that card, and that card sits
+          inside a `position: sticky` ancestor. `position: sticky` always
+          creates its own stacking context — and since that context has
+          no explicit z-index, it's ranked as "z-index: auto" wherever it
+          sits in the tree. That meant this modal's `z-index: 9999` was
+          only being compared against *other elements inside that same
+          sticky subtree*, not against everything on the page. The topbar
+          above uses `z-index: 100` explicitly at a *higher* level of the
+          tree, so it kept painting on top of this modal — which is why
+          it looked like the modal only "covered" the sidebar card and
+          left the topbar and other sections untouched.
+          Moving the modal here, as a plain sibling with no positioned
+          ancestor in between, means it is only ever compared against the
+          root stacking context, so its z-index reliably wins and it
+          covers the entire page as intended. */}
+      {showAgent && (
+        <div
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)",
+            display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000,
+          }}
+          onClick={() => setShowAgent(false)}
+        >
+          <div
+            style={{
+              width: "90%", maxWidth: "500px",
+              background: "#15152a", borderRadius: "16px",
+              padding: "24px", color: "#fff",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2>{t("landlordInformation", "Landlord Information")}</h2>
+
+            {hasAnyLandlordInfo ? (
+              <>
+                {hasValue(landlordName) && (
+                  <p style={{ marginTop: "12px" }}>
+                    <strong>{t("nameLabel", "Name")}:</strong> {landlordName}
+                  </p>
+                )}
+
+                {hasValue(landlordPhone) && (
+                  <p style={{ marginTop: "8px" }}>
+                    <strong>{t("phoneLabel", "Phone")}:</strong> {landlordPhone}
+                  </p>
+                )}
+
+                {hasValue(landlordEmail) && (
+                  <p style={{ marginTop: "8px" }}>
+                    <strong>{t("emailLabel", "Email")}:</strong> {landlordEmail}
+                  </p>
+                )}
+
+                {hasContactButtons && (
+                  <div style={{ display: "flex", gap: "12px", marginTop: "15px", flexWrap: "wrap" }}>
+                    {hasValue(landlordWhatsapp) && (
+                      <a
+                        href={`https://wa.me/${landlordWhatsapp}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          flex: 1, minWidth: "150px", textAlign: "center",
+                          padding: "12px 16px", background: "#25D366",
+                          color: "#fff", textDecoration: "none", borderRadius: "10px",
+                          fontWeight: 600, fontSize: "14px",
+                          boxShadow: "0 4px 12px rgba(37,211,102,0.3)",
+                        }}
+                      >
+                        📱 {t("whatsappChat", "WhatsApp Chat")}
+                      </a>
+                    )}
+
+                    {hasValue(landlordTelegram) && (
+                      <a
+                        href={`https://t.me/${landlordTelegram.replace("@", "")}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          flex: 1, minWidth: "150px", textAlign: "center",
+                          padding: "12px 16px", background: "#229ED9",
+                          color: "#fff", textDecoration: "none", borderRadius: "10px",
+                          fontWeight: 600, fontSize: "14px",
+                          boxShadow: "0 4px 12px rgba(34,158,217,0.3)",
+                        }}
+                      >
+                        ✈️ {t("telegramMessage", "Telegram Message")}
+                      </a>
+                    )}
+                  </div>
+                )}
+              </>
+            ) : (
+              <p style={{ marginTop: "12px", color: theme.dark.subtext }}>
+                {t("noLandlordInfo", "No landlord contact information available.")}
+              </p>
+            )}
+
+            <button
+              onClick={() => setShowAgent(false)}
+              style={{
+                marginTop: "20px", width: "100%", padding: "12px",
+                border: "none", borderRadius: "10px",
+                background: "#7c3aed", color: "#fff", cursor: "pointer",
+              }}
+            >
+              {t("close", "Close")}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── GLOBAL STYLES ── */}
       <style>{`

@@ -99,6 +99,21 @@ const LockIcon = () => (
   </svg>
 );
 
+// Filter icons
+
+
+const SparkleIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/>
+  </svg>
+);
+const VerifiedIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    <polyline points="9 12 11 14 15 10" />
+  </svg>
+);
+
 // ─── Theme tokens ──────────────────────────────────────────────────────────
 const theme = {
   dark: {
@@ -118,10 +133,28 @@ const theme = {
     inputBg: "#f8f8fc",
     border: "#e4e4ef",
     text: "#12122a",
-    subtext: "#6060888",
+    subtext: "#606088",
     badgeBg: "#ffffff",
   },
 };
+
+// ─── Amenity filter options ────────────────────────────────────────────────
+const AMENITY_FILTER_OPTIONS = [
+  "WiFi",
+  "Parking",
+  "Pool",
+  "Gym",
+  "Air Conditioning",
+  "Security",
+  "TV",
+  "Kitchen",
+  "Balcony",
+  "Garden",
+];
+
+// A property is shown if it matches at least this many of the selected
+// amenities (or all of them, if fewer than this many are selected).
+const AMENITY_MATCH_THRESHOLD = 1;
 
 // ─── Component ─────────────────────────────────────────────────────────────
 export default function UserDashboard() {
@@ -130,6 +163,14 @@ export default function UserDashboard() {
   const [country, setCountry] = useState("");
 const [rooms, setRooms] = useState("All");
 const [price, setPrice] = useState("All");
+  const [bedrooms, setBedrooms] = useState("All");
+  const [bathrooms, setBathrooms] = useState("All");
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  const [showAmenityFilter, setShowAmenityFilter] = useState(false);
+  // NOTE: Verified Landlord filtering isn't implemented yet — there's no
+  // verification system behind it. The toggle is visible but disabled so
+  // the UI communicates "coming soon" instead of silently doing nothing.
+ 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [favorites, setFavorites] = useState<number[]>([]);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
@@ -220,6 +261,12 @@ async function toggleFavorite(propertyId: number) {
 
     setFavorites((prev) => [...prev, propertyId]);
   }
+}
+
+function toggleAmenityFilter(item: string) {
+  setSelectedAmenities((prev) =>
+    prev.includes(item) ? prev.filter((a) => a !== item) : [...prev, item]
+  );
 }
 
   return (
@@ -926,6 +973,44 @@ padding: "32px 16px 80px",
                 </div>
               </div>
 
+              {/* Bedrooms select */}
+              <div style={{ flex: "1 1 120px", minWidth: "110px" }}>
+                <div style={{ fontSize: "10px", color: th.subtext, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "5px" }}>{t("bedrooms", "Bedrooms")}</div>
+                <div style={{ position: "relative" }}>
+                  <select
+                    value={bedrooms}
+                    onChange={e => setBedrooms(e.target.value)}
+                    style={{ appearance: "none", width: "100%", padding: "9px 32px 9px 12px", border: `1px solid ${th.border}`, borderRadius: "9px", background: th.inputBg, color: th.text, fontSize: "14px", cursor: "pointer", outline: "none" }}
+                  >
+                    <option value="All">{t("all", "All")}</option>
+                    <option value="1">1+</option>
+                    <option value="2">2+</option>
+                    <option value="3">3+</option>
+                    <option value="4">4+</option>
+                  </select>
+                  <span style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: th.subtext }}><ChevronDownIcon /></span>
+                </div>
+              </div>
+
+              {/* Bathrooms select */}
+              <div style={{ flex: "1 1 120px", minWidth: "110px" }}>
+                <div style={{ fontSize: "10px", color: th.subtext, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "5px" }}>{t("bathrooms", "Bathrooms")}</div>
+                <div style={{ position: "relative" }}>
+                  <select
+                    value={bathrooms}
+                    onChange={e => setBathrooms(e.target.value)}
+                    style={{ appearance: "none", width: "100%", padding: "9px 32px 9px 12px", border: `1px solid ${th.border}`, borderRadius: "9px", background: th.inputBg, color: th.text, fontSize: "14px", cursor: "pointer", outline: "none" }}
+                  >
+                    <option value="All">{t("all", "All")}</option>
+                    <option value="1">1+</option>
+                    <option value="2">2+</option>
+                    <option value="3">3+</option>
+                    <option value="4">4+</option>
+                  </select>
+                  <span style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: th.subtext }}><ChevronDownIcon /></span>
+                </div>
+              </div>
+
               {/* Search button */}
               <button
                 style={{
@@ -946,6 +1031,113 @@ padding: "32px 16px 80px",
                 <SearchIcon /> {t("searchHomes", "Search Homes")}
               </button>
             </div>
+
+            {/* ── Second row: amenity tabs + verified toggle ── */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center", marginTop: "14px" }}>
+
+              {/* Amenities dropdown trigger */}
+              <div style={{ position: "relative" }}>
+                <button
+                  type="button"
+                  onClick={() => setShowAmenityFilter((o) => !o)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "7px",
+                    background: selectedAmenities.length ? "rgba(124,58,237,0.15)" : th.inputBg,
+                    border: `1px solid ${selectedAmenities.length ? "#7c3aed" : th.border}`,
+                    borderRadius: "999px", padding: "8px 14px",
+                    color: selectedAmenities.length ? "#7c3aed" : th.text,
+                    fontSize: "13px", fontWeight: 600, cursor: "pointer",
+                  }}
+                >
+                  <SparkleIcon />
+                  {t("amenities", "Amenities")}
+                  {selectedAmenities.length > 0 && ` (${selectedAmenities.length})`}
+                  <ChevronDownIcon />
+                </button>
+
+                {showAmenityFilter && (
+                  <>
+                    {/* click-away backdrop */}
+                    <div
+                      onClick={() => setShowAmenityFilter(false)}
+                      style={{ position: "fixed", inset: 0, zIndex: 199 }}
+                    />
+                    <div style={{
+                      position: "absolute", top: "calc(100% + 8px)", left: 0, zIndex: 200,
+                      background: th.cardBg, border: `1px solid ${th.border}`,
+                      borderRadius: "14px", padding: "16px", width: "min(320px, 80vw)",
+                      boxShadow: "0 12px 40px rgba(0,0,0,0.3)",
+                    }}>
+                      <div style={{ fontSize: "11px", color: th.subtext, marginBottom: "12px", lineHeight: 1.5 }}>
+                        {t(
+                          "amenityFilterHint",
+                          `Shows homes matching at least ${AMENITY_MATCH_THRESHOLD} of your selected amenities.`
+                        )}
+                      </div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                        {AMENITY_FILTER_OPTIONS.map((item) => {
+                          const active = selectedAmenities.includes(item);
+                          return (
+                            <button
+                              key={item}
+                              type="button"
+                              onClick={() => toggleAmenityFilter(item)}
+                              style={{
+                                background: active ? "rgba(124,58,237,0.15)" : th.inputBg,
+                                border: `1px solid ${active ? "#7c3aed" : th.border}`,
+                                color: active ? "#7c3aed" : th.text,
+                                padding: "7px 12px", borderRadius: "999px",
+                                fontSize: "12px", fontWeight: 600, cursor: "pointer",
+                              }}
+                            >
+                              {item}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {selectedAmenities.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedAmenities([])}
+                          style={{
+                            marginTop: "12px", background: "none", border: "none",
+                            color: th.subtext, fontSize: "12px", fontWeight: 600,
+                            cursor: "pointer", padding: 0, textDecoration: "underline",
+                          }}
+                        >
+                          {t("clearAmenities", "Clear amenities")}
+                        </button>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Verified Landlord — visible, but not wired up yet */}
+              <button
+                type="button"
+                disabled
+                title={t("verifiedComingSoon", "Verified landlord checks are coming soon")}
+                style={{
+                  display: "flex", alignItems: "center", gap: "7px",
+                  background: th.inputBg,
+                  border: `1px dashed ${th.border}`,
+                  borderRadius: "999px", padding: "8px 14px",
+                  color: th.subtext,
+                  fontSize: "13px", fontWeight: 600,
+                  cursor: "not-allowed", opacity: 0.7,
+                }}
+              >
+                <VerifiedIcon />
+                {t("verifiedLandlord", "Verified Landlord")}
+                <span style={{
+                  fontSize: "10px", fontWeight: 700, textTransform: "uppercase",
+                  background: dark ? "#252540" : "#e8e8f4", padding: "2px 6px", borderRadius: "6px",
+                }}>
+                  {t("comingSoon", "Soon")}
+                </span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -956,6 +1148,10 @@ padding: "32px 16px 80px",
   country={country}
   rooms={rooms}
   price={price}
+  bedrooms={bedrooms}
+  bathrooms={bathrooms}
+  amenities={selectedAmenities}
+  amenityMatchThreshold={AMENITY_MATCH_THRESHOLD}
   favorites={favorites}
   onToggleFavorite={toggleFavorite}
   showFavoritesOnly={showFavoritesOnly}

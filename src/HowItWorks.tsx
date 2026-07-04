@@ -79,8 +79,8 @@ const steps = [
       </svg>
     ),
     title: "Search Homes",
-    desc: "Enter your country, set your room preference and budget. Our smart search instantly surfaces homes that match your lifestyle.",
-    detail: "Filter by rooms, price range, and location all at once.",
+    desc: "Pick the country you want and search for homes there. Just type the country, set your rooms and budget, and see homes that match right away.",
+    detail: "Quick search by country, rooms, and price.",
   },
   {
     icon: (
@@ -88,9 +88,9 @@ const steps = [
         <rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" />
       </svg>
     ),
-    title: "Explore Listings",
-    desc: "Browse verified homes with real photos, detailed descriptions, and transparent pricing. Save favourites to compare later.",
-    detail: "Every listing is reviewed and verified by our team.",
+    title: "See the Details",
+    desc: "Open a home to see where it is and what it has — photos, location, price, and all the small details you need to know before you choose.",
+    detail: "Real photos and clear info, no surprises.",
   },
   {
     icon: (
@@ -98,16 +98,18 @@ const steps = [
         <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
       </svg>
     ),
-    title: "Contact Owner",
-    desc: "Message owners directly through our secure chat. Ask questions, negotiate terms, and book instantly — no third-party fees.",
-    detail: "Payments are protected and fully encrypted.",
+    title: "Contact the Owner",
+    desc: "Like what you see? Message the person who uploaded the home directly. Ask your questions and settle the details together.",
+    detail: "Direct chat with the owner, no middleman.",
   },
 ];
 
 const faqs = [
-  { q: "Is CountryStay free to use?", a: "Yes — browsing, searching, and messaging owners is completely free for renters. Owners pay a small listing fee." },
+  { q: "Is CountryStay free to use?", a: "Yes — searching for homes and messaging owners is free for you. Owners pay a small fee to list their home." },
+  { q: "How do I search for a home?", a: "Just choose the country you want, then set your rooms and budget. You'll see homes that match right away." },
+  { q: "How can I see a home's full details?", a: "Open any listing to see its exact location, real photos, price, and everything it offers, all in one place." },
+  { q: "How do I contact the owner?", a: "Once you find a home you like, message the owner directly from the listing to ask questions and arrange your stay." },
   { q: "How do I know a listing is real?", a: "Every home goes through a manual review process. Verified badges indicate listings our team has inspected." },
-  { q: "Can I cancel a booking?", a: "Cancellation policies vary by owner. You'll see the policy clearly before you confirm any booking." },
   { q: "What countries are supported?", a: "We currently support homes in over 60 countries and are expanding monthly. Search your country to check availability." },
 ];
 
@@ -270,7 +272,7 @@ export default function HowItWorks() {
             How It <span style={{ color: "#8b5cf6" }}>Works</span>
           </h1>
           <p style={{ color: "rgba(255,255,255,0.55)", marginTop: "14px", fontSize: "15px", lineHeight: 1.7 }}>
-            Three simple steps stand between you and your perfect home anywhere in the world.
+            Three small steps stand between you and your perfect home anywhere in the world.
           </p>
         </div>
       </section>

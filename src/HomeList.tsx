@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "./supabaseClient";
 import { useNavigate } from "react-router-dom";
+
 interface Property {
   id: number;
 
@@ -23,11 +24,14 @@ interface Property {
 
   sqft: number;
   size?: number;
-landlord_name?: string;
-landlord_phone?: string;
-landlord_email?: string;
-landlord_whatsapp?: string;
-landlord_telegram?: string;
+
+  amenities?: string[];
+
+  landlord_name?: string;
+  landlord_phone?: string;
+  landlord_email?: string;
+  landlord_whatsapp?: string;
+  landlord_telegram?: string;
   image_url: string;
 
   rating?: number;
@@ -38,10 +42,15 @@ interface HomeListProps {
   country: string;
   rooms: string;
   price: string;
+  bedrooms: string;
+  bathrooms: string;
+  amenities: string[];
+  amenityMatchThreshold: number;
   favorites: number[];
   onToggleFavorite: (id: number) => void;
   showFavoritesOnly: boolean;
 }
+
 function PropertyCard({
   property,
   dark,
@@ -62,17 +71,17 @@ function PropertyCard({
     <div
       className="cs-card-in cs-card-hover"
       onClick={async () => {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
-  if (!user) {
-    navigate("/signup");
-    return;
-  }
+        if (!user) {
+          navigate("/signup");
+          return;
+        }
 
-  navigate(`/property/${property.id}`);
-}}
+        navigate(`/property/${property.id}`);
+      }}
       style={{
         background: dark ? "#1e1e2f" : "#fff",
         borderRadius: "18px",
@@ -104,9 +113,6 @@ function PropertyCard({
             transition: "transform 0.4s ease",
           }}
         />
-
-        {/* Heart Icon */}
-
       </div>
 
       {/* Content */}
@@ -141,65 +147,61 @@ function PropertyCard({
             marginBottom: "14px",
           }}
         >
-         ${Number(property.price).toLocaleString()} {t("perMonth")}
+          ${Number(property.price).toLocaleString()} {t("perMonth")}
         </p>
 
-{/* Bottom Info */}
-{/* Bottom Info */}
-<div
-  style={{
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    fontSize: "13px",
-    fontWeight: "500",
-    color: dark ? "#94a3b8" : "#64748b",
-    borderTop: dark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #f1f5f9",
-    paddingTop: "14px",
-    marginTop: "4px",
-    transition: "border-color 0.3s, color 0.3s",
-  }}
->
-  {/* Landlord Name */}
-  <div style={{ display: "flex", alignItems: "center", gap: "6px", maxWidth: "110px" }}>
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-      <circle cx="12" cy="7" r="4" />
-    </svg>
-    <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-      {property.landlord_name || t("host")}
-    </span>
-  </div>
+        {/* Bottom Info */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            fontSize: "13px",
+            fontWeight: "500",
+            color: dark ? "#94a3b8" : "#64748b",
+            borderTop: dark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #f1f5f9",
+            paddingTop: "14px",
+            marginTop: "4px",
+            transition: "border-color 0.3s, color 0.3s",
+          }}
+        >
+          {/* Landlord Name */}
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", maxWidth: "110px" }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {property.landlord_name || t("host")}
+            </span>
+          </div>
 
-  {/* NEW: Property Space / Dimensions Overview */}
-  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-    {/* Layout Spec */}
-    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect width="18" height="18" x="3" y="3" rx="2" />
-        <path d="M3 9h18M9 21V3" />
-      </svg>
-      <span>
-        {t("roomsCount", { count: property.rooms })}
-      </span>
-    </div>
+          {/* Layout Spec: rooms / bedrooms / bathrooms */}
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="18" height="18" x="3" y="3" rx="2" />
+                <path d="M3 9h18M9 21V3" />
+              </svg>
+              <span>{t("roomsCount", { count: property.rooms })}</span>
+            </div>
 
-   
-  </div>
+          
+          </div>
 
-  {/* Rating */}
-  {property.rating && (
-    /* ANIMATION ADDED: "cs-rating-pop" makes the star rating pop in once when the card first renders */
-    <div className="cs-rating-pop" style={{ display: "flex", alignItems: "center", gap: "4px", color: "#f59e0b" }}>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-      </svg>
-      <span style={{ fontWeight: "600", color: dark ? "#fff" : "#0f172a" }}>
-        {property.rating.toFixed(1)}
-      </span>
-    </div>
-  )}
-</div>
+          {/* Rating */}
+          {property.rating && (
+            /* ANIMATION ADDED: "cs-rating-pop" makes the star rating pop in once when the card first renders */
+            <div className="cs-rating-pop" style={{ display: "flex", alignItems: "center", gap: "4px", color: "#f59e0b" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              <span style={{ fontWeight: "600", color: dark ? "#fff" : "#0f172a" }}>
+                {property.rating.toFixed(1)}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -210,6 +212,10 @@ export default function HomeList({
   country,
   rooms,
   price,
+  bedrooms,
+  bathrooms,
+  amenities,
+  amenityMatchThreshold,
   favorites,
   onToggleFavorite,
   showFavoritesOnly,
@@ -224,76 +230,99 @@ export default function HomeList({
   }, []);
 
   async function fetchProperties() {
-  setLoading(true);
+    setLoading(true);
 
-  const { data, error } = await supabase
-    .from("properties")
-    .select("*");
+    const { data, error } = await supabase
+      .from("properties")
+      .select("*")
+      .order("id", { ascending: false });
 
-  console.log("DATA:", data);
-  console.log("ERROR:", error);
+    if (error) {
+      setError(error.message);
+    } else {
+      setProperties(data || []);
+    }
 
-  if (error) {
-    setError(error.message);
-  } else {
-    setProperties(data || []);
+    setLoading(false);
   }
 
-  setLoading(false);
-}
-const filteredProperties = properties.filter((property) => {
-  const matchesCountry =
-    !country ||
-    property.location
-      .toLowerCase()
-      .includes(country.toLowerCase());
+  const filteredProperties = properties.filter((property) => {
+    const matchesCountry =
+      !country ||
+      property.location
+        .toLowerCase()
+        .includes(country.toLowerCase());
 
-  const roomCount = parseInt(rooms);
-const matchesRooms =
-  rooms === "All" ||
-  !rooms ||
-  (rooms === "4+ Rooms"
-    ? property.rooms >= 4
-    : property.rooms === roomCount);
+    const roomCount = parseInt(rooms);
+    const matchesRooms =
+      rooms === "All" ||
+      !rooms ||
+      (rooms === "4+ Rooms"
+        ? property.rooms >= 4
+        : property.rooms === roomCount);
 
-  let matchesPrice = true;
+    let matchesPrice = true;
 
+    if (price === "< $20k") {
+      matchesPrice = property.price < 20000;
+    }
 
+    if (price === "$20 – 30k") {
+      matchesPrice = property.price >= 20000 && property.price <= 30000;
+    }
 
-if (price === "< $20k") {
-  matchesPrice = property.price < 20000;
-}
+    if (price === "$30 – 50k") {
+      matchesPrice = property.price >= 30000 && property.price <= 50000;
+    }
 
-if (price === "$20 – 30k") {
-  matchesPrice =
-    property.price >= 20000 &&
-    property.price <= 30000;
-}
+    if (price === "$50k+") {
+      matchesPrice = property.price >= 50000;
+    }
 
-if (price === "$30 – 50k") {
-  matchesPrice =
-    property.price >= 30000 &&
-    property.price <= 50000;
-}
+    // Bedrooms filter: "All" means no filtering, otherwise "N" means N+ bedrooms
+    const minBedrooms = parseInt(bedrooms);
+    const matchesBedrooms =
+      !bedrooms ||
+      bedrooms === "All" ||
+      Number.isNaN(minBedrooms) ||
+      (typeof property.bedrooms === "number" && property.bedrooms >= minBedrooms);
 
-if (price === "$50k+") {
-  matchesPrice =
-    property.price >= 50000;
-}
+    // Bathrooms filter: "All" means no filtering, otherwise "N" means N+ bathrooms
+    const minBathrooms = parseInt(bathrooms);
+    const matchesBathrooms =
+      !bathrooms ||
+      bathrooms === "All" ||
+      Number.isNaN(minBathrooms) ||
+      (typeof property.bathrooms === "number" && property.bathrooms >= minBathrooms);
 
-  const matchesFavorite =
-    !showFavoritesOnly ||
-    favorites.includes(property.id);
+    // Amenities filter: property must match at least `amenityMatchThreshold` of the
+    // selected amenities (or all of them, if fewer than the threshold were selected).
+    let matchesAmenities = true;
+    if (amenities && amenities.length > 0) {
+      const propertyAmenities = (property.amenities || []).map((a) =>
+        a.toLowerCase()
+      );
+      const matchedCount = amenities.filter((a) =>
+        propertyAmenities.includes(a.toLowerCase())
+      ).length;
+      const requiredMatches = Math.min(amenityMatchThreshold, amenities.length);
+      matchesAmenities = matchedCount >= requiredMatches;
+    }
 
-  return (
-    matchesCountry &&
-    matchesRooms &&
-    matchesPrice &&
-    matchesFavorite
-  );
-});
-console.log(properties);
-console.log(filteredProperties);
+    const matchesFavorite =
+      !showFavoritesOnly || favorites.includes(property.id);
+
+    return (
+      matchesCountry &&
+      matchesRooms &&
+      matchesPrice &&
+      matchesBedrooms &&
+      matchesBathrooms &&
+      matchesAmenities &&
+      matchesFavorite
+    );
+  });
+
   return (
     <section
       style={{
@@ -338,29 +367,33 @@ console.log(filteredProperties);
         </p>
       )}
 
-      {!loading && !error && (
-   <div
-  style={{
-    display: "grid",
-    /* 1. Changed "320px" to "1fr" so cards stretch flexibly to fill available row space */
-    gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-    gap: "28px",
-    /* 2. Changed "start" to "center" or "space-between" equivalent to balance any remaining edge space */
-    justifyContent: "stretch", 
-    width: "100%",
-  }}
->
-  {filteredProperties.map((property, index) => (
-    <PropertyCard
-      key={property.id}
-      property={property}
-      dark={dark}
-      isFavorite={favorites.includes(property.id)}
-      onToggleFavorite={onToggleFavorite}
-      index={index}
-    />
-  ))}
-</div>
+      {!loading && !error && filteredProperties.length === 0 && (
+        <p style={{ color: dark ? "#94a3b8" : "#64748b" }}>
+          {t("noPropertiesFound", "No homes match your filters. Try adjusting them.")}
+        </p>
+      )}
+
+      {!loading && !error && filteredProperties.length > 0 && (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+            gap: "28px",
+            justifyContent: "stretch",
+            width: "100%",
+          }}
+        >
+          {filteredProperties.map((property, index) => (
+            <PropertyCard
+              key={property.id}
+              property={property}
+              dark={dark}
+              isFavorite={favorites.includes(property.id)}
+              onToggleFavorite={onToggleFavorite}
+              index={index}
+            />
+          ))}
+        </div>
       )}
 
       {/* ── GLOBAL STYLES (animations added) ───────────────────────── */}

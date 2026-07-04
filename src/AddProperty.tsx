@@ -263,6 +263,7 @@ export default function AddProperty() {
   const [price, setPrice] = useState("");
   const [rooms, setRooms] = useState("");
   const [bedrooms, setBedrooms] = useState("");
+  const [bathrooms, setBathrooms] = useState("");
   
   const [sqft, setSqft] = useState("");
   const [rating, setRating] = useState("");
@@ -320,6 +321,7 @@ function LocationPicker() {
     else if (isNaN(Number(price)) || Number(price) <= 0) e.price = t("errorPriceInvalid");
     if (bedrooms && isNaN(Number(bedrooms))) e.bedrooms = t("errorMustBeNumber");
     if (rooms && isNaN(Number(rooms))) e.rooms = t("errorMustBeNumber");
+    if (bathrooms && isNaN(Number(bathrooms))) e.bathrooms = t("errorMustBeNumber");
     if (sqft && isNaN(Number(sqft))) e.sqft = t("errorMustBeNumber");
     if (rating && (isNaN(Number(rating)) || Number(rating) < 0 || Number(rating) > 5))
       e.rating = t("errorRatingRange");
@@ -403,7 +405,7 @@ if (!user) {
           rent:      Number(price),
           rooms:     rooms     ? Number(rooms)     : null,
           bedrooms:  bedrooms  ? Number(bedrooms)  : null,
-         
+         bathrooms:  bathrooms ? Number(bathrooms) : null,
           sqft:      sqft      ? Number(sqft)      : null,
           size:      sqft      ? Number(sqft)      : null,
           image_url: mainUrl,
@@ -415,7 +417,7 @@ landlord_whatsapp: landlordWhatsapp,
 landlord_telegram: landlordTelegram,
 lat: position.lat,
 lng: position.lng,
-        }])
+        }]) 
         .select()
         .single();
 
@@ -738,8 +740,8 @@ lng: position.lng,
                 <Input value={bedrooms} onChange={setBedrooms} type="number" placeholder={t("bedroomsPlaceholder")} error={errors.bedrooms} />
               </div>
               <div>
-                <Label>{t("rooms")}</Label>
-                <Input value={rooms} onChange={setRooms} type="number" placeholder={t("roomsPlaceholder2")} error={errors.rooms} />
+                <Label>{t("bathrooms")}</Label>
+                <Input value={bathrooms} onChange={setBathrooms} type="number" placeholder={t("bathroomsPlaceholder")} error={errors.bathrooms} />
               </div>
             </div>
             <div className="ap-grid-2">
